@@ -113,7 +113,7 @@ export default function ChatClient() {
       }
 
       if (!trimmed.includes("@")) {
-        toast.error("Enter a valid email or the admin password.");
+        toast.error("Enter a valid email.");
         return;
       }
 
