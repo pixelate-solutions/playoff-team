@@ -37,7 +37,7 @@ export default async function HomePage() {
           <div className="flex flex-wrap gap-4 text-sm text-slate-500">
             <span>Entry Fee: $100</span>
             <span>70/15/10/5 payout split</span>
-            <span>Manual stat tracking</span>
+            <span>ESPN stat updates</span>
           </div>
           <Card className="glass-card mx-auto w-full lg:w-3/4 mt-4 lg:mt-8">
             <CardHeader className="pb-2">
