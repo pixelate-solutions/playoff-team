@@ -15,7 +15,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Entries are locked." }, { status: 403 });
     }
 
-    const existingEntry = await db.query.entries.findFirst({\n+      where: eq(entries.email, payload.email),\n+    });\n+\n+    if (existingEntry) {\n+      return NextResponse.json({ error: \"That email already has an entry.\" }, { status: 409 });\n+    }\n+\n+    const slotSet = new Set(payload.roster.map((item) => item.slot));
+    const existingEntry = await db.query.entries.findFirst({
+      where: eq(entries.email, payload.email),
+    });
+
+    if (existingEntry) {
+      return NextResponse.json({ error: "That email already has an entry." }, { status: 409 });
+    }
+
+    const slotSet = new Set(payload.roster.map((item) => item.slot));
     if (slotSet.size !== payload.roster.length) {
       return NextResponse.json({ error: "Roster slots must be unique." }, { status: 400 });
     }
