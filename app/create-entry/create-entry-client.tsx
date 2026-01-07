@@ -1,0 +1,349 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { entrySlotOrder, positionCounts, validateRoster } from "@/lib/roster";
+import type { EntrySlot } from "@/lib/roster";
+
+const slotPriority: Record<string, EntrySlot[]> = {
+  QB: ["QB1", "QB2", "QB3", "QB4"],
+  RB: ["RB1", "RB2", "RB3", "FLEX"],
+  WR: ["WR1", "WR2", "WR3", "FLEX"],
+  TE: ["TE", "FLEX"],
+  K: ["K"],
+  DST: ["DST"],
+};
+
+const tabs = ["QB", "RB", "WR", "FLEX", "TE", "K", "DST"] as const;
+
+type PlayerOption = {
+  id: string;
+  name: string;
+  position: "QB" | "RB" | "WR" | "TE" | "K" | "DST";
+  nflTeamId: string;
+  teamName: string;
+  teamAbbreviation: string;
+};
+
+type TeamOption = {
+  id: string;
+  name: string;
+  abbreviation: string;
+  conference: "AFC" | "NFC";
+  seed: number | null;
+  madePlayoffs: boolean;
+  eliminatedRound: string | null;
+};
+
+const emptyRoster = entrySlotOrder.reduce((acc, slot) => {
+  acc[slot] = null;
+  return acc;
+}, {} as Record<EntrySlot, PlayerOption | null>);
+
+export function CreateEntryClient({ players, teams }: { players: PlayerOption[]; teams: TeamOption[] }) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [info, setInfo] = useState({ teamName: "", participantName: "", email: "" });
+  const [roster, setRoster] = useState<Record<EntrySlot, PlayerOption | null>>(emptyRoster);
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("QB");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const usedTeamIds = useMemo(() => {
+    const ids = new Set<string>();
+    Object.values(roster).forEach((player) => {
+      if (player) ids.add(player.nflTeamId);
+    });
+    return ids;
+  }, [roster]);
+
+  const selectedPlayers = useMemo(() => Object.values(roster).filter(Boolean) as PlayerOption[], [roster]);
+
+  const positionSummary = useMemo(() => {
+    return selectedPlayers.reduce(
+      (acc, player) => {
+        acc[player.position] += 1;
+        return acc;
+      },
+      { QB: 0, RB: 0, WR: 0, TE: 0, K: 0, DST: 0 }
+    );
+  }, [selectedPlayers]);
+
+  const rosterErrors = useMemo(() => {
+    const rosterPlayers = selectedPlayers.map((player) => ({
+      playerId: player.id,
+      position: player.position,
+      nflTeamId: player.nflTeamId,
+    }));
+    return validateRoster(rosterPlayers);
+  }, [selectedPlayers]);
+
+  const playersByTab = useMemo(() => {
+    if (activeTab === "FLEX") {
+      return players.filter((player) => ["RB", "WR", "TE"].includes(player.position));
+    }
+    return players.filter((player) => player.position === activeTab);
+  }, [activeTab, players]);
+
+  const groupedPlayers = useMemo(() => {
+    const groups = new Map<string, PlayerOption[]>();
+    playersByTab.forEach((player) => {
+      const key = `${player.teamAbbreviation} - ${player.teamName}`;
+      const list = groups.get(key) ?? [];
+      list.push(player);
+      groups.set(key, list);
+    });
+    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [playersByTab]);
+
+  function handleAddPlayer(player: PlayerOption) {
+    if (usedTeamIds.has(player.nflTeamId)) {
+      toast.error("You already used that NFL team.");
+      return;
+    }
+
+    const availableSlots = activeTab === "FLEX" ? ["FLEX"] : slotPriority[player.position];
+    const openSlot = availableSlots.find((slot) => roster[slot] === null);
+
+    if (!openSlot) {
+      toast.error("No available roster slot for that position.");
+      return;
+    }
+
+    setRoster((prev) => ({ ...prev, [openSlot]: player }));
+  }
+
+  function handleRemove(slot: EntrySlot) {
+    setRoster((prev) => ({ ...prev, [slot]: null }));
+  }
+
+  async function handleSubmit() {
+    const rosterItems = Object.entries(roster)
+      .filter(([, value]) => value !== null)
+      .map(([slot, value]) => ({
+        slot: slot as EntrySlot,
+        playerId: value!.id,
+      }));
+
+    if (!rosterErrors.valid) {
+      toast.error(rosterErrors.errors.join(" "));
+      return;
+    }
+
+    if (!info.teamName || !info.participantName || !info.email) {
+      toast.error("Please complete all participant fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamName: info.teamName,
+          participantName: info.participantName,
+          email: info.email,
+          roster: rosterItems,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "Failed to create entry");
+      }
+
+      localStorage.setItem("entryId", result.id);
+      toast.success("Entry submitted!");
+      router.push(`/my-entry?entryId=${result.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="container space-y-8">
+      <div className="space-y-2">
+        <Badge variant="secondary">Create Entry</Badge>
+        <h1 className="font-display text-4xl text-slate-900">Draft Your 2025 Playoff Team</h1>
+        <p className="text-slate-600">Two steps. One roster. Playoff survival starts now.</p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-6">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Step 1: Participant Info</CardTitle>
+              <CardDescription>One entry per participant. Use a valid email.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="Team Name"
+                value={info.teamName}
+                onChange={(event) => setInfo((prev) => ({ ...prev, teamName: event.target.value }))}
+              />
+              <Input
+                placeholder="Participant Name"
+                value={info.participantName}
+                onChange={(event) => setInfo((prev) => ({ ...prev, participantName: event.target.value }))}
+              />
+              <Input
+                placeholder="Email"
+                type="email"
+                value={info.email}
+                onChange={(event) => setInfo((prev) => ({ ...prev, email: event.target.value }))}
+              />
+              <Button onClick={() => setStep(2)} disabled={!info.teamName || !info.participantName || !info.email}>
+                Continue to Roster
+              </Button>
+            </CardContent>
+          </Card>
+
+          {step === 2 && (
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>Step 2: Draft Your Roster</CardTitle>
+                <CardDescription>Select 14 players, one per NFL playoff team.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as (typeof tabs)[number])}>
+                  <TabsList className="flex flex-wrap gap-2">
+                    {tabs.map((tab) => (
+                      <TabsTrigger key={tab} value={tab}>
+                        {tab}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {tabs.map((tab) => (
+                    <TabsContent key={tab} value={tab}>
+                      <div className="space-y-6">
+                        {groupedPlayers.map(([teamLabel, teamPlayers]) => (
+                          <div key={teamLabel} className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{teamLabel}</div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                              {teamPlayers.map((player) => {
+                                const teamUsed = usedTeamIds.has(player.nflTeamId);
+                                return (
+                                <div
+                                  key={player.id}
+                                  className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${
+                                    teamUsed ? "opacity-50 grayscale" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="font-medium text-slate-900">{player.name}</p>
+                                      <p className="text-xs text-slate-500">{player.teamAbbreviation}</p>
+                                    </div>
+                                    <Badge variant="outline">{player.position}</Badge>
+                                  </div>
+                                  <Button
+                                    className="mt-4 w-full"
+                                    variant="secondary"
+                                    onClick={() => handleAddPlayer(player)}
+                                    disabled={teamUsed}
+                                  >
+                                    {teamUsed ? "Team Used" : "Add Player"}
+                                  </Button>
+                                </div>
+                              )})}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Roster Summary</CardTitle>
+              <CardDescription>{selectedPlayers.length} of 14 players selected.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2 text-sm text-slate-600">
+                <div className="flex items-center justify-between">
+                  <span>QBs</span>
+                  <span className="font-medium text-slate-900">{positionSummary.QB} / {positionCounts.QB}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>RBs</span>
+                  <span className="font-medium text-slate-900">{positionSummary.RB} / {positionCounts.RB}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>WRs</span>
+                  <span className="font-medium text-slate-900">{positionSummary.WR} / {positionCounts.WR}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>TEs</span>
+                  <span className="font-medium text-slate-900">{positionSummary.TE} / {positionCounts.TE}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Ks</span>
+                  <span className="font-medium text-slate-900">{positionSummary.K} / {positionCounts.K}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>DSTs</span>
+                  <span className="font-medium text-slate-900">{positionSummary.DST} / {positionCounts.DST}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {entrySlotOrder.map((slot) => {
+                  const player = roster[slot];
+                  return (
+                    <div key={slot} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                      <div>
+                        <p className="font-medium text-slate-900">{slot}</p>
+                        <p className="text-xs text-slate-500">{player ? `${player.name} - ${player.teamAbbreviation}` : "Open"}</p>
+                      </div>
+                      {player && (
+                        <Button variant="ghost" size="sm" onClick={() => handleRemove(slot)}>
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {!rosterErrors.valid && selectedPlayers.length > 0 && (
+                <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">
+                  {rosterErrors.errors[0]}
+                </div>
+              )}
+              <Button className="w-full" onClick={handleSubmit} disabled={!rosterErrors.valid || isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit Entry"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Team Usage</CardTitle>
+              <CardDescription>{usedTeamIds.size} of {teams.length} playoff teams used.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {teams.map((team) => (
+                <Badge key={team.id} variant={usedTeamIds.has(team.id) ? "success" : "outline"}>
+                  {team.abbreviation}
+                </Badge>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

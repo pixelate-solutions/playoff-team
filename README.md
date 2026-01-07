@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 2025 NFL Playoff Fantasy Challenge
+
+Production-ready Next.js 15 app for running a playoff fantasy pool with roster validation, admin tooling, and ESPN/CSV stat importing.
+
+## Tech Stack
+
+- Next.js 15 (App Router, TypeScript)
+- Tailwind CSS + shadcn/ui
+- Neon Postgres + Drizzle ORM
+- pnpm
 
 ## Getting Started
 
-First, run the development server:
+### 1) Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2) Configure environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env` file with:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+DATABASE_URL="postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+ADMIN_PASSWORD="<shared-admin-password>"
+```
 
-## Learn More
+### 3) Run migrations / push schema
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm db:push
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4) Seed sample data
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm db:seed
+```
 
-## Deploy on Vercel
+### 5) Start the dev server
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open `http://localhost:3000`.
+
+## Useful Scripts
+
+- `pnpm db:generate` - generate SQL migrations
+- `pnpm db:migrate` - apply migrations
+- `pnpm db:studio` - open Drizzle Studio
+- `pnpm db:seed` - seed sample teams, players, and a demo entry
+
+## Admin Access
+
+Visit `/admin/login` and sign in with `ADMIN_PASSWORD`. Admin pages include:
+
+- Dashboard (editable player score overrides + fetch & recalc)
+- Teams
+- Players
+- Games
+- Leaderboard
+- Settings (lock entries, current round, recalc scores)
+
+## Scoring Logic
+
+Scoring totals are computed from per-game stats in `player_game_stats`. You can override an individual game with `manual_override_points`, or override an entire player's playoff total via `players.playoff_override_points`.
+
+## External Stats Integration
+
+The admin dashboard includes a "Fetch from ESPN & Recalculate" action that calls `/api/admin/fetch-playoff-stats`. ESPN integration lives in `lib/espn.ts`, and a CSV fallback upload is available via `/api/admin/upload-stats`. You can toggle between Playoffs and Regular Season to test with historical weeks.
+
+To import stats:
+- (Optional) Set `players.external_id` to ESPN athlete IDs for more reliable matching.
+- CSV uploads can match on `external_player_id` or `player_name + team_abbr`.
+
+## Notes
+
+- One entry per email (unique constraint).
+- Entries can be locked via admin settings.
+- External stats fetching is stubbed until you connect a provider.

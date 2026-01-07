@@ -1,0 +1,60 @@
+import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/lib/admin";
+import { db } from "@/db";
+import { players } from "@/db/schema";
+import { adminPlayerSchema } from "@/lib/schemas";
+import { z } from "zod";
+
+const payloadSchema = z.object({
+  action: z.enum(["create", "update", "delete"]),
+  player: adminPlayerSchema,
+});
+
+export async function GET() {
+  const session = await requireAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const roster = await db.query.players.findMany();
+  return NextResponse.json(roster);
+}
+
+export async function POST(request: Request) {
+  const session = await requireAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const payload = payloadSchema.parse(await request.json());
+
+    if (payload.action === "create") {
+      const [player] = await db.insert(players).values(payload.player).returning();
+      return NextResponse.json(player);
+    }
+
+    if (payload.action === "update") {
+      if (!payload.player.id) {
+        return NextResponse.json({ error: "Player ID is required" }, { status: 400 });
+      }
+      const [player] = await db
+        .update(players)
+        .set(payload.player)
+        .where(eq(players.id, payload.player.id))
+        .returning();
+      return NextResponse.json(player);
+    }
+
+    if (!payload.player.id) {
+      return NextResponse.json({ error: "Player ID is required" }, { status: 400 });
+    }
+    await db.delete(players).where(eq(players.id, payload.player.id));
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+}
