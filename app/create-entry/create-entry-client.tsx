@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { entrySlotOrder, positionCounts, validateRoster } from "@/lib/roster";
 import type { EntrySlot } from "@/lib/roster";
 
-const slotPriority: Record<string, EntrySlot[]> = {
+const slotPriority: Record<PlayerOption["position"], EntrySlot[]> = {
   QB: ["QB1", "QB2", "QB3", "QB4"],
   RB: ["RB1", "RB2", "RB3", "FLEX"],
   WR: ["WR1", "WR2", "WR3", "FLEX"],
@@ -107,7 +107,7 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
       return;
     }
 
-    const availableSlots = activeTab === "FLEX" ? ["FLEX"] : slotPriority[player.position];
+    const availableSlots = activeTab === "FLEX" ? (["FLEX"] as EntrySlot[]) : slotPriority[player.position];
     const openSlot = availableSlots.find((slot) => roster[slot] === null);
 
     if (!openSlot) {

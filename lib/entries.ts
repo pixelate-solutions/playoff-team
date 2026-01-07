@@ -1,7 +1,8 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { entries, entryPlayers, games, nflTeams, playerGameStats, players } from "@/db/schema";
 import { computePointsFromStats, normalizePoints } from "@/lib/scoring";
+import { playoffRounds, type PlayoffRound } from "@/lib/statsImport";
 
 export async function getEntryWithRoster(entryId: string) {
   const entry = await db.query.entries.findFirst({
@@ -129,6 +130,17 @@ export async function getLeaderboard(round?: string | null) {
     }));
   }
 
+  const weekMatch = round.match(/week\s*(\d+)/i);
+  const week = weekMatch ? Number(weekMatch[1]) : null;
+  const isPlayoffRound = playoffRounds.includes(round as PlayoffRound);
+
+  if (!week && !isPlayoffRound) {
+    return items.map((item) => ({
+      ...item,
+      totalPoints: normalizePoints(item.totalPointsCached),
+    }));
+  }
+
   const roster = await db
     .select({
       entryId: entryPlayers.entryId,
@@ -162,7 +174,11 @@ export async function getLeaderboard(round?: string | null) {
     .from(entryPlayers)
     .innerJoin(playerGameStats, eq(entryPlayers.playerId, playerGameStats.playerId))
     .innerJoin(games, eq(playerGameStats.gameId, games.id))
-    .where(eq(games.round, round));
+    .where(
+      week
+        ? and(eq(games.seasonType, "regular"), eq(games.week, week))
+        : and(eq(games.seasonType, "post"), eq(games.round, round as PlayoffRound))
+    );
 
   const entryTotals = new Map<string, number>();
   for (const item of roster) {

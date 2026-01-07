@@ -2,8 +2,12 @@ import type { InferSelectModel } from "drizzle-orm";
 import { playerGameStats } from "@/db/schema";
 
 export type PlayerGameStatsRow = InferSelectModel<typeof playerGameStats>;
+export type PlayerGameStatsInput = Omit<
+  PlayerGameStatsRow,
+  "id" | "playerId" | "gameId" | "createdAt" | "updatedAt"
+>;
 
-export function computePointsFromStats(row: PlayerGameStatsRow): number {
+export function computePointsFromStats(row: PlayerGameStatsInput): number {
   if (row.manualOverridePoints !== null && row.manualOverridePoints !== undefined) {
     return Number(row.manualOverridePoints);
   }

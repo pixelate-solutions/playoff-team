@@ -20,7 +20,14 @@ const playoffTeamAbbr = new Set([
   "PIT",
 ]);
 
-const teamSeed = [
+type Conference = "AFC" | "NFC";
+type TeamSeedInput = {
+  name: string;
+  abbreviation: string;
+  conference: Conference;
+};
+
+const teamSeedBase: TeamSeedInput[] = [
   { name: "Buffalo Bills", abbreviation: "BUF", conference: "AFC" },
   { name: "Houston Texans", abbreviation: "HOU", conference: "AFC" },
   { name: "Seattle Seahawks", abbreviation: "SEA", conference: "NFC" },
@@ -47,7 +54,9 @@ const teamSeed = [
   { name: "Cleveland Browns", abbreviation: "CLE", conference: "AFC" },
   { name: "Draft Prospect", abbreviation: "DRAFT", conference: "AFC" },
   { name: "Free Agent", abbreviation: "FA", conference: "AFC" },
-].map((team) => ({
+];
+
+const teamSeed = teamSeedBase.map((team) => ({
   ...team,
   madePlayoffs: playoffTeamAbbr.has(team.abbreviation),
 }));

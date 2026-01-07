@@ -32,6 +32,13 @@ export async function POST(request: Request) {
 
   try {
     const payload = adminStatsSchema.parse(await request.json());
+    const statsValues = {
+      ...payload,
+      manualOverridePoints:
+        payload.manualOverridePoints === null || payload.manualOverridePoints === undefined
+          ? payload.manualOverridePoints
+          : String(payload.manualOverridePoints),
+    };
 
     const existing = await db.query.playerGameStats.findFirst({
       where: and(eq(playerGameStats.playerId, payload.playerId), eq(playerGameStats.gameId, payload.gameId)),
@@ -40,13 +47,13 @@ export async function POST(request: Request) {
     if (existing) {
       const [record] = await db
         .update(playerGameStats)
-        .set(payload)
+        .set(statsValues)
         .where(eq(playerGameStats.id, existing.id))
         .returning();
       return NextResponse.json(record);
     }
 
-    const [record] = await db.insert(playerGameStats).values(payload).returning();
+    const [record] = await db.insert(playerGameStats).values(statsValues).returning();
     return NextResponse.json(record);
   } catch (error) {
     if (error instanceof Error) {
