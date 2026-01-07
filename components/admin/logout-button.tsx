@@ -12,7 +12,7 @@ export function AdminLogoutButton() {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleLogout}>
+    <Button className="bg-gray-100/60" variant="ghost" size="sm" onClick={handleLogout}>
       Log Out
     </Button>
   );

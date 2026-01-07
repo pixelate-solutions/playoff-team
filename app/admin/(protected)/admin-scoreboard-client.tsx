@@ -16,7 +16,7 @@ const rounds = ["Wildcard", "Divisional", "Conference", "SuperBowl"] as const;
 const modes = ["playoff", "regular"] as const;
 const weeks = Array.from({ length: 18 }, (_, index) => index + 1);
 const selectStyles =
-  "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900";
+  "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer";
 const weekToggleBase =
   "rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-slate-900";
 const weekToggleActive = "border-slate-900 bg-slate-900 text-white";
@@ -185,6 +185,7 @@ export function AdminScoreboardClient({
     setSelectedRounds([]);
   }
 
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -198,53 +199,36 @@ export function AdminScoreboardClient({
 
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle>Search Entries</CardTitle>
-          <CardDescription>Find teams by name, email, participant, or player.</CardDescription>
+          <CardTitle>Fetch ESPN Stats</CardTitle>
+          <CardDescription>Pull stats for a playoff round and recalculate totals.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Input
-            placeholder="Search team, participant, email, or player"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <p className="text-xs text-slate-500">
-            Showing {filteredCount} of {entryCount} entries
-          </p>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6">
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle>Fetch ESPN Stats</CardTitle>
-            <CardDescription>Pull stats for a playoff round and recalculate totals.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
-                Season: {seasonYear}-{String(seasonYear + 1).slice(-2)}
-              </div>
-              <select
-                className={selectStyles}
-                value={mode}
-                onChange={(event) => setMode(event.target.value as (typeof modes)[number])}
-              >
-                {modes.map((modeOption) => (
-                  <option key={modeOption} value={modeOption}>
-                    {modeOption === "playoff" ? "Playoffs" : "Regular Season"}
-                  </option>
-                ))}
-              </select>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
+              Season: {seasonYear}-{String(seasonYear + 1).slice(-2)}
             </div>
-            {mode === "playoff" ? (
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" className={selectAllButton} onClick={selectAllRounds}>
-                    Select all
-                  </button>
-                  <button type="button" className={deselectAllButton} onClick={deselectAllRounds}>
-                    Deselect all
-                  </button>
+            <select
+              className={selectStyles}
+              value={mode}
+              onChange={(event) => setMode(event.target.value as (typeof modes)[number])}
+            >
+              {modes.map((modeOption) => (
+                <option key={modeOption} value={modeOption}>
+                  {modeOption === "playoff" ? "Playoffs" : "Regular Season"}
+                </option>
+              ))}
+            </select>
+          </div>
+          {mode === "playoff" ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" className={selectAllButton} onClick={selectAllRounds}>
+                  Select all
+                </button>
+                <button type="button" className={deselectAllButton} onClick={deselectAllRounds}>
+                  Deselect all
+                </button>
+                <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-br from-blue-100/80 to-emerald-100/80 px-3 py-2">
                   {rounds.map((roundOption) => {
                     const isSelected = selectedRounds.includes(roundOption);
                     return (
@@ -259,19 +243,21 @@ export function AdminScoreboardClient({
                     );
                   })}
                 </div>
-                <p className="text-xs text-slate-500">
-                  Selected rounds: {selectedRounds.length ? selectedRounds.join(", ") : "None"}
-                </p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" className={selectAllButton} onClick={() => setSelectedWeeks(weeks)}>
-                    Select all
-                  </button>
-                  <button type="button" className={deselectAllButton} onClick={() => setSelectedWeeks([])}>
-                    Deselect all
-                  </button>
+              <p className="text-xs text-slate-500">
+                Selected rounds: {selectedRounds.length ? selectedRounds.join(", ") : "None"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" className={selectAllButton} onClick={() => setSelectedWeeks(weeks)}>
+                  Select all
+                </button>
+                <button type="button" className={deselectAllButton} onClick={() => setSelectedWeeks([])}>
+                  Deselect all
+                </button>
+                <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-br from-blue-100/80 to-emerald-100/80 px-3 py-2">
                   {weeks.map((week) => {
                     const isSelected = selectedWeeks.includes(week);
                     return (
@@ -286,19 +272,34 @@ export function AdminScoreboardClient({
                     );
                   })}
                 </div>
-                <p className="text-xs text-slate-500">
-                  Selected weeks: {selectedWeeks.length ? selectedWeeks.join(", ") : "None"}
-                </p>
               </div>
-            )}
-            <Button onClick={handleFetchStats} disabled={loading}>
-              {loading ? "Updating..." : "Fetch from ESPN & Recalculate"}
-            </Button>
-            <p className="text-xs text-slate-500">
-              Fetching overwrites existing stats so only the selected weeks or rounds remain.
-            </p>
-          </CardContent>
-        </Card>
+              <p className="text-xs text-slate-500">
+                Selected weeks: {selectedWeeks.length ? selectedWeeks.join(", ") : "None"}
+              </p>
+            </div>
+          )}
+          <Button onClick={handleFetchStats} disabled={loading}>
+            {loading ? "Updating..." : "Fetch from ESPN & Recalculate"}
+          </Button>
+          <p className="text-xs text-slate-500">
+            Fetching overwrites existing stats so only the selected weeks or rounds remain.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-display text-2xl text-slate-900">Teams</h2>
+          <p className="text-sm text-slate-500">
+            Showing {filteredCount} of {entryCount} entries
+          </p>
+        </div>
+        <Input
+          className="w-full sm:max-w-xs"
+          placeholder="Search team or player"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
       </div>
 
       <div className="space-y-6">

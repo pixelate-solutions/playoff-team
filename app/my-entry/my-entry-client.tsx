@@ -126,6 +126,18 @@ export function MyEntryClient() {
     }
   }
 
+  function handleChangeEmail() {
+    setEntryId(null);
+    setData(null);
+    setLookupEmail("");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("entryId");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("entryId");
+      window.history.replaceState(null, "", url.toString());
+    }
+  }
+
   return (
     <div className="container space-y-8">
       <div className="space-y-2">
@@ -140,16 +152,33 @@ export function MyEntryClient() {
             <CardTitle>Find My Roster</CardTitle>
             <CardDescription>Enter the email you used to create your entry.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row">
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={lookupEmail}
-              onChange={(event) => setLookupEmail(event.target.value)}
-            />
-            <Button onClick={handleLookup} disabled={!lookupEmail || lookupLoading}>
-              {lookupLoading ? "Looking up..." : "Find Entry"}
-            </Button>
+          <CardContent>
+            <form
+              className="flex flex-col gap-3 sm:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (lookupEmail && !lookupLoading) {
+                  handleLookup();
+                }
+              }}
+            >
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={lookupEmail}
+                onChange={(event) => setLookupEmail(event.target.value)}
+              />
+              <Button type="submit" disabled={!lookupEmail || lookupLoading}>
+                {lookupLoading ? "Looking up..." : "Find Entry"}
+              </Button>
+            </form>
+            <p className="mt-3 text-xs text-slate-500">
+              Don&apos;t have one?{" "}
+              <a href="/create-entry" className="font-medium text-slate-900 underline underline-offset-4">
+                Create a team
+              </a>
+              .
+            </p>
           </CardContent>
         </Card>
       )}
@@ -162,16 +191,33 @@ export function MyEntryClient() {
             <CardTitle>Find My Roster</CardTitle>
             <CardDescription>Use the email you entered when creating your roster.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row">
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={lookupEmail}
-              onChange={(event) => setLookupEmail(event.target.value)}
-            />
-            <Button onClick={handleLookup} disabled={!lookupEmail || lookupLoading}>
-              {lookupLoading ? "Looking up..." : "Find Entry"}
-            </Button>
+          <CardContent>
+            <form
+              className="flex flex-col gap-3 sm:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (lookupEmail && !lookupLoading) {
+                  handleLookup();
+                }
+              }}
+            >
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={lookupEmail}
+                onChange={(event) => setLookupEmail(event.target.value)}
+              />
+              <Button type="submit" disabled={!lookupEmail || lookupLoading}>
+                {lookupLoading ? "Looking up..." : "Find Entry"}
+              </Button>
+            </form>
+            <p className="mt-3 text-xs text-slate-500">
+              Don&apos;t have one?{" "}
+              <a href="/create-entry" className="font-medium text-slate-900 underline underline-offset-4">
+                Create a team
+              </a>
+              .
+            </p>
           </CardContent>
         </Card>
       )}
@@ -180,7 +226,15 @@ export function MyEntryClient() {
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle>{data.entry.teamName}</CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Button className="sm:hidden" variant="outline" size="sm" onClick={handleChangeEmail}>
+                  <span>New roster search</span>
+                </Button>
+                <CardTitle>{data.entry.teamName}</CardTitle>
+                <Button className="hidden sm:inline" variant="outline" size="sm" onClick={handleChangeEmail}>
+                  <span>New roster search</span>
+                </Button>
+              </div>
               <CardDescription>{data.entry.participantName} - {data.entry.email}</CardDescription>
             </CardHeader>
             <CardContent>
