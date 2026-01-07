@@ -28,9 +28,25 @@ export async function POST(request: Request) {
 
   try {
     const payload = payloadSchema.parse(await request.json());
+    const overrideValue =
+      payload.player.playoffOverridePoints === null || payload.player.playoffOverridePoints === undefined
+        ? payload.player.playoffOverridePoints
+        : String(payload.player.playoffOverridePoints);
+    const playerValues = {
+      name: payload.player.name,
+      position: payload.player.position,
+      nflTeamId: payload.player.nflTeamId,
+      isActive: payload.player.isActive,
+      notes: payload.player.notes ?? null,
+      externalId: payload.player.externalId ?? null,
+      playoffOverridePoints: overrideValue,
+    } satisfies typeof players.$inferInsert;
 
     if (payload.action === "create") {
-      const [player] = await db.insert(players).values(payload.player).returning();
+      const [player] = await db
+        .insert(players)
+        .values(playerValues)
+        .returning();
       return NextResponse.json(player);
     }
 
@@ -40,7 +56,7 @@ export async function POST(request: Request) {
       }
       const [player] = await db
         .update(players)
-        .set(payload.player)
+        .set(playerValues)
         .where(eq(players.id, payload.player.id))
         .returning();
       return NextResponse.json(player);
