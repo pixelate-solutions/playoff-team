@@ -39,7 +39,9 @@ export default async function HomePage() {
             <span>70/15/10/5 payout split</span>
             <span>ESPN stat updates</span>
           </div>
-          <Card className="glass-card mx-auto w-4/5 mt-4 lg:mt-8">
+        </div>
+        <div className="space-y-6">
+          <Card className="glass-card mx-auto w-full mt-4 lg:mt-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-base text-slate-700">Money Pool</CardTitle>
               <CardDescription>Live total based on entries.</CardDescription>
@@ -54,8 +56,6 @@ export default async function HomePage() {
               <p className="mt-2 text-xs text-slate-500">Based on {entryCount} teams.</p>
             </CardContent>
           </Card>
-        </div>
-        <div className="space-y-6">
           <Card className="glass-card">
             <CardHeader>
               <CardTitle>Quick Snapshot</CardTitle>
@@ -78,42 +78,6 @@ export default async function HomePage() {
                     <span className="font-display text-2xl text-slate-900">{item.value}</span>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle>Roster Requirements</CardTitle>
-              <CardDescription>14 total players, one per playoff team.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm text-slate-600">
-              <div className="flex items-center justify-between">
-                <span>Quarterbacks</span>
-                <span className="font-medium text-slate-900">4</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Running Backs</span>
-                <span className="font-medium text-slate-900">3</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Wide Receivers</span>
-                <span className="font-medium text-slate-900">3</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Flex (RB/WR/TE)</span>
-                <span className="font-medium text-slate-900">1</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Tight End</span>
-                <span className="font-medium text-slate-900">1</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Kicker</span>
-                <span className="font-medium text-slate-900">1</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Defense (DST)</span>
-                <span className="font-medium text-slate-900">1</span>
               </div>
             </CardContent>
           </Card>
