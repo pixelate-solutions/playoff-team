@@ -283,6 +283,7 @@ export default function ChatClient() {
           <div className="space-y-4">
             {sortedMessages.map((message) => {
               const isMine = entryId ? message.entryId === entryId : adminMode && message.entryId === null;
+              const isAdminMessage = message.entryId === null;
               return (
                 <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                   <div className="max-w-[80%]">
@@ -296,7 +297,11 @@ export default function ChatClient() {
                     </div>
                     <div
                       className={`mt-1 inline-block max-w-full rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                        isMine ? "bg-sky-500 text-white" : "bg-slate-200 text-slate-800"
+                        isMine
+                          ? "bg-sky-500 text-white"
+                          : isAdminMessage
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-200 text-slate-800"
                       }`}
                     >
                       {message.message}
