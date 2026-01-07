@@ -2,8 +2,8 @@ import { z } from "zod";
 import { entrySlotSchema } from "@/lib/roster";
 
 export const createEntrySchema = z.object({
-  teamName: z.string().min(2).max(40),
-  participantName: z.string().min(2).max(60),
+  firstName: z.string().min(2).max(40),
+  lastName: z.string().min(2).max(60),
   email: z.string().email(),
   roster: z
     .array(
@@ -97,6 +97,13 @@ export const adminRosterUpdateSchema = z.object({
   playerId: z.string().uuid(),
   slot: entrySlotSchema,
   action: z.enum(["add", "remove"]),
+});
+
+export const adminEntryUpdateSchema = z.object({
+  entryId: z.string().uuid(),
+  firstName: z.string().min(2).optional(),
+  lastName: z.string().min(2).optional(),
+  email: z.string().email().optional(),
 });
 
 export const adminSettingsSchema = z.object({

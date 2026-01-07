@@ -51,6 +51,10 @@ export default function AdminEntryDetailPage() {
   const [slot, setSlot] = useState<string>(entrySlotOrder[0]);
   const [playerId, setPlayerId] = useState<string>("");
   const [playerQuery, setPlayerQuery] = useState("");
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [savingEntry, setSavingEntry] = useState(false);
 
   useEffect(() => {
     if (!entryId) return;
@@ -72,6 +76,16 @@ export default function AdminEntryDetailPage() {
         setTeams(data);
       });
   }, [entryId]);
+
+  useEffect(() => {
+    if (!entry) return;
+    const nameParts = entry.entry.participantName.trim().split(/\s+/);
+    const first = nameParts.shift() ?? "";
+    const last = nameParts.join(" ");
+    setEditFirstName(first);
+    setEditLastName(last);
+    setEditEmail(entry.entry.email);
+  }, [entry]);
 
   const playerMap = useMemo(() => {
     const map = new Map<string, Player>();
@@ -107,6 +121,52 @@ export default function AdminEntryDetailPage() {
     }
     setEntry((prev) => (prev ? { ...prev, entry: { ...prev.entry, paid: data.paid } } : prev));
     toast.success("Paid status updated.");
+  }
+
+  async function handleEntrySave() {
+    if (!editFirstName.trim() || !editLastName.trim() || !editEmail.trim()) {
+      toast.error("First name, last name, and email are required.");
+      return;
+    }
+    setSavingEntry(true);
+    try {
+      const response = await fetch("/api/admin/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateEntry",
+          entryId,
+          entryUpdate: {
+            entryId,
+            firstName: editFirstName.trim(),
+            lastName: editLastName.trim(),
+            email: editEmail.trim(),
+          },
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to update entry");
+      }
+      setEntry((prev) =>
+        prev
+          ? {
+              ...prev,
+              entry: {
+                ...prev.entry,
+                participantName: data.participantName ?? prev.entry.participantName,
+                teamName: data.teamName ?? prev.entry.teamName,
+                email: data.email ?? prev.entry.email,
+              },
+            }
+          : prev
+      );
+      toast.success("Entry updated.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Update failed");
+    } finally {
+      setSavingEntry(false);
+    }
   }
 
   async function handleAdd() {
@@ -202,18 +262,39 @@ export default function AdminEntryDetailPage() {
     <div className="space-y-6">
       <div>
         <Badge variant="secondary">Admin</Badge>
-        <h1 className="font-display text-4xl text-slate-900">{entry.entry.teamName}</h1>
-        <p className="text-slate-600">{entry.entry.participantName} - {entry.entry.email}</p>
+        <h1 className="font-display text-4xl text-slate-900">{entry.entry.participantName}</h1>
+        <p className="text-slate-600">{entry.entry.email}</p>
       </div>
 
       <Card className="glass-card">
         <CardHeader>
           <CardTitle>Entry Status</CardTitle>
-          <CardDescription>Payment status and roster edits.</CardDescription>
+          <CardDescription>Payment status and participant details.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4">
-          <Badge variant={entry.entry.paid ? "success" : "outline"}>{entry.entry.paid ? "Paid" : "Unpaid"}</Badge>
-          <Button onClick={togglePaid}>{entry.entry.paid ? "Mark Unpaid" : "Mark Paid"}</Button>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <Badge variant={entry.entry.paid ? "success" : "outline"}>{entry.entry.paid ? "Paid" : "Unpaid"}</Badge>
+            <Button onClick={togglePaid}>{entry.entry.paid ? "Mark Unpaid" : "Mark Paid"}</Button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">First Name</label>
+              <Input value={editFirstName} onChange={(event) => setEditFirstName(event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Last Name</label>
+              <Input value={editLastName} onChange={(event) => setEditLastName(event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</label>
+              <Input value={editEmail} onChange={(event) => setEditEmail(event.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={handleEntrySave} disabled={savingEntry}>
+              {savingEntry ? "Saving..." : "Save Details"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -292,7 +373,7 @@ export default function AdminEntryDetailPage() {
                   <TableCell>{player.teamAbbreviation}</TableCell>
                   <TableCell>{player.position}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => handleRemove(player.playerId, player.slot)}>
+                    <Button variant="outline" size="sm" onClick={() => handleRemove(player.playerId, player.slot)}>
                       Remove
                     </Button>
                   </TableCell>

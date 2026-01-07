@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Entry not found for that email." }, { status: 404 });
     }
 
-    return NextResponse.json({ id: entry.id, teamName: entry.teamName });
+    return NextResponse.json({ id: entry.id, participantName: entry.participantName });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

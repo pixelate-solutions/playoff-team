@@ -10,7 +10,6 @@ export default async function AdminLeaderboardPage() {
   const leaderboard = await db
     .select({
       id: entries.id,
-      teamName: entries.teamName,
       participantName: entries.participantName,
       email: entries.email,
       paid: entries.paid,
@@ -35,23 +34,21 @@ export default async function AdminLeaderboardPage() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Team</TableHead>
-                <TableHead>Participant</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Paid</TableHead>
-              </TableRow>
+                <TableRow>
+                  <TableHead>Team</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Paid</TableHead>
+                </TableRow>
             </TableHeader>
             <TableBody>
               {leaderboard.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>
                     <Link href={`/admin/entries/${entry.id}`} className="font-medium text-slate-900 hover:underline">
-                      {entry.teamName}
+                      {entry.participantName}
                     </Link>
                   </TableCell>
-                  <TableCell>{entry.participantName}</TableCell>
                   <TableCell>{entry.email}</TableCell>
                   <TableCell>{Number(entry.totalPointsCached).toFixed(2)}</TableCell>
                   <TableCell>{entry.paid ? "Yes" : "No"}</TableCell>

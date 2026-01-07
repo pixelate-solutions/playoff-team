@@ -9,6 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sortRosterBySlot } from "@/lib/roster";
@@ -57,12 +65,15 @@ export function AdminScoreboardClient({
   initialLeaderboardLinksEnabled: boolean;
 }) {
   const router = useRouter();
-  const [selectedRounds, setSelectedRounds] = useState<(typeof rounds)[number][]>([initialRound]);
+  const [selectedRounds, setSelectedRounds] = useState<(typeof rounds)[number][]>([]);
   const [mode, setMode] = useState<(typeof modes)[number]>("playoff");
-  const [selectedWeeks, setSelectedWeeks] = useState<number[]>([1]);
+  const [selectedWeeks, setSelectedWeeks] = useState<number[]>([]);
   const [search, setSearch] = useState("");
+  const [paidFilter, setPaidFilter] = useState<"all" | "paid" | "unpaid">("all");
   const [leaderboardLinksEnabled, setLeaderboardLinksEnabled] = useState(initialLeaderboardLinksEnabled);
   const [linksLoading, setLinksLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AdminEntry | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [overrideValues, setOverrideValues] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
     entries.forEach((entry) => {
@@ -79,12 +90,11 @@ export function AdminScoreboardClient({
   const entryCount = entries.length;
   const filteredEntries = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) {
-      return entries;
-    }
-
     return entries.filter((entry) => {
-      const basicMatch = [entry.teamName, entry.participantName, entry.email].some((value) =>
+      if (paidFilter === "paid" && !entry.paid) return false;
+      if (paidFilter === "unpaid" && entry.paid) return false;
+      if (!term) return true;
+      const basicMatch = [entry.participantName, entry.email].some((value) =>
         value.toLowerCase().includes(term)
       );
       if (basicMatch) {
@@ -92,7 +102,7 @@ export function AdminScoreboardClient({
       }
       return entry.roster.some((player) => player.playerName.toLowerCase().includes(term));
     });
-  }, [entries, search]);
+  }, [entries, paidFilter, search]);
   const filteredCount = filteredEntries.length;
   const seasonYear = useMemo(() => {
     const now = new Date();
@@ -163,6 +173,31 @@ export function AdminScoreboardClient({
       setLoading(false);
     }
   }
+
+  async function handleDeleteEntry() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const response = await fetch("/api/admin/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", entryId: deleteTarget.entryId }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Failed to delete entry");
+      toast.success("Entry deleted.");
+      setDeleteTarget(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  const canFetch =
+    !loading &&
+    ((mode === "regular" && selectedWeeks.length > 0) || (mode === "playoff" && selectedRounds.length > 0));
 
   function toggleWeek(week: number) {
     setSelectedWeeks((prev) => {
@@ -302,7 +337,7 @@ export function AdminScoreboardClient({
               </p>
             </div>
           )}
-          <Button onClick={handleFetchStats} disabled={loading}>
+          <Button onClick={handleFetchStats} disabled={!canFetch}>
             {loading ? "Updating..." : "Fetch from ESPN & Recalculate"}
           </Button>
           <p className="text-xs text-slate-500">
@@ -329,12 +364,23 @@ export function AdminScoreboardClient({
             <span>Leaderboard links enabled</span>
           </div>
         </div>
-        <Input
-          className="w-full sm:max-w-xs"
-          placeholder="Search team or player"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <select
+            className={`${selectStyles} w-full sm:w-40`}
+            value={paidFilter}
+            onChange={(event) => setPaidFilter(event.target.value as typeof paidFilter)}
+          >
+            <option value="all">All entries</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+          </select>
+          <Input
+            className="w-full sm:max-w-xs"
+            placeholder="Search team or player"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -342,8 +388,8 @@ export function AdminScoreboardClient({
           <Card key={entry.entryId} className="glass-card">
             <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle>{entry.teamName}</CardTitle>
-                <CardDescription>{entry.participantName}</CardDescription>
+                <CardTitle>{entry.participantName}</CardTitle>
+                <CardDescription className="text-xs text-slate-500">{entry.email}</CardDescription>
               </div>
               <div className="flex items-center gap-3">
                 <Badge variant={entry.paid ? "success" : "outline"}>{entry.paid ? "Paid" : "Unpaid"}</Badge>
@@ -351,6 +397,9 @@ export function AdminScoreboardClient({
                 <span className="text-2xl font-display text-slate-900">{entry.totalPoints.toFixed(2)}</span>
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/admin/entries/${entry.entryId}`}>Edit Roster</Link>
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(entry)}>
+                  Delete
                 </Button>
               </div>
             </CardHeader>
@@ -401,6 +450,26 @@ export function AdminScoreboardClient({
           </Card>
         ))}
       </div>
+
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Entry</DialogTitle>
+            <DialogDescription>
+              This will permanently remove the roster for{" "}
+              <span className="font-semibold text-slate-900">{deleteTarget?.participantName}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteEntry} disabled={deleteLoading}>
+              {deleteLoading ? "Deleting..." : "Delete Entry"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

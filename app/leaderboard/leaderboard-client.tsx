@@ -71,12 +71,11 @@ export function LeaderboardClient({
                   <TableCell>
                     {linksEnabled ? (
                       <Link className="font-medium text-slate-900 hover:underline" href={`/entry/${entry.id}`}>
-                        {entry.teamName}
+                        {entry.participantName}
                       </Link>
                     ) : (
-                      <span className="font-medium text-slate-900">{entry.teamName}</span>
+                      <span className="font-medium text-slate-900">{entry.participantName}</span>
                     )}
-                    <div className="text-xs text-slate-500 md:hidden">{entry.participantName}</div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{entry.participantName}</TableCell>
                   <TableCell>{entry.totalPoints.toFixed(2)}</TableCell>

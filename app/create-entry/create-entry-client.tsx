@@ -1,26 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { entrySlotOrder, positionCounts, validateRoster } from "@/lib/roster";
 import type { EntrySlot } from "@/lib/roster";
 
 const slotPriority: Record<PlayerOption["position"], EntrySlot[]> = {
   QB: ["QB1", "QB2", "QB3", "QB4"],
-  RB: ["RB1", "RB2", "RB3", "FLEX"],
-  WR: ["WR1", "WR2", "WR3", "FLEX"],
-  TE: ["TE", "FLEX"],
+  RB: ["RB1", "RB2", "RB3"],
+  WR: ["WR1", "WR2", "WR3"],
+  TE: ["TE"],
   K: ["K"],
   DST: ["DST"],
 };
 
-const tabs = ["QB", "RB", "WR", "FLEX", "TE", "K", "DST"] as const;
+const tabs = ["QB", "RB", "WR", "TE", "FLEX", "DST", "K"] as const;
 
 type PlayerOption = {
   id: string;
@@ -49,11 +57,14 @@ const emptyRoster = entrySlotOrder.reduce((acc, slot) => {
 export function CreateEntryClient({ players, teams }: { players: PlayerOption[]; teams: TeamOption[] }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [info, setInfo] = useState({ teamName: "", participantName: "", email: "" });
+  const [info, setInfo] = useState({ firstName: "", lastName: "", email: "" });
   const [infoError, setInfoError] = useState("");
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [roster, setRoster] = useState<Record<EntrySlot, PlayerOption | null>>(emptyRoster);
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("QB");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const prevSelectedCount = useRef(0);
 
   const usedTeamIds = useMemo(() => {
     const ids = new Set<string>();
@@ -63,17 +74,26 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
     return ids;
   }, [roster]);
 
-  const selectedPlayers = useMemo(() => Object.values(roster).filter(Boolean) as PlayerOption[], [roster]);
-
   const positionSummary = useMemo(() => {
-    return selectedPlayers.reduce(
-      (acc, player) => {
-        acc[player.position] += 1;
+    return Object.entries(roster).reduce(
+      (acc, [slot, player]) => {
+        if (!player) return acc;
+        if (slot === "FLEX") return acc;
+        if (slot.startsWith("QB")) acc.QB += 1;
+        else if (slot.startsWith("RB")) acc.RB += 1;
+        else if (slot.startsWith("WR")) acc.WR += 1;
+        else if (slot === "TE") acc.TE += 1;
+        else if (slot === "K") acc.K += 1;
+        else if (slot === "DST") acc.DST += 1;
         return acc;
       },
       { QB: 0, RB: 0, WR: 0, TE: 0, K: 0, DST: 0 }
     );
-  }, [selectedPlayers]);
+  }, [roster]);
+
+  const flexCount = roster.FLEX ? 1 : 0;
+
+  const selectedPlayers = useMemo(() => Object.values(roster).filter(Boolean) as PlayerOption[], [roster]);
 
   const rosterErrors = useMemo(() => {
     const rosterPlayers = selectedPlayers.map((player) => ({
@@ -84,21 +104,53 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
     return validateRoster(rosterPlayers);
   }, [selectedPlayers]);
 
+  useEffect(() => {
+    if (step !== 2) {
+      prevSelectedCount.current = selectedPlayers.length;
+      return;
+    }
+    if (selectedPlayers.length === 14 && prevSelectedCount.current < 14) {
+      setShowSubmitDialog(true);
+    }
+    prevSelectedCount.current = selectedPlayers.length;
+  }, [selectedPlayers.length, step]);
+
   const isInfoValid = useMemo(() => {
-    const teamName = info.teamName.trim();
-    const participantName = info.participantName.trim();
+    const firstName = info.firstName.trim();
+    const lastName = info.lastName.trim();
     const email = info.email.trim();
     const emailValid = /\S+@\S+\.\S+/.test(email);
-    return teamName.length >= 2 && participantName.length >= 2 && emailValid;
+    return firstName.length >= 2 && lastName.length >= 2 && emailValid;
   }, [info]);
 
-  function handleContinueToRoster() {
+  async function handleContinueToRoster() {
     if (!isInfoValid) {
-      setInfoError("Please enter a team name (2+ chars), participant name (2+ chars), and a valid email.");
+      setInfoError("Please enter a first name, last name, and a valid email.");
       return;
     }
     setInfoError("");
-    setStep(2);
+    setCheckingEmail(true);
+    try {
+      const response = await fetch("/api/entries/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: info.email.trim() }),
+      });
+      if (response.ok) {
+        setInfoError("That email already has an entry. Use a different email.");
+        return;
+      }
+      if (response.status !== 404) {
+        const payload = await response.json().catch(() => ({}));
+        setInfoError(payload.error ?? "Unable to verify email. Please try again.");
+        return;
+      }
+      setStep(2);
+    } catch {
+      setInfoError("Unable to verify email. Please try again.");
+    } finally {
+      setCheckingEmail(false);
+    }
   }
 
   const playersByTab = useMemo(() => {
@@ -153,7 +205,7 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
       return;
     }
 
-    if (!info.teamName || !info.participantName || !info.email) {
+    if (!info.firstName || !info.lastName || !info.email) {
       toast.error("Please complete all participant fields.");
       return;
     }
@@ -165,8 +217,8 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          teamName: info.teamName,
-          participantName: info.participantName,
+          firstName: info.firstName,
+          lastName: info.lastName,
           email: info.email,
           roster: rosterItems,
         }),
@@ -204,18 +256,18 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <Input
-                placeholder="Team Name"
-                value={info.teamName}
+                placeholder="First Name"
+                value={info.firstName}
                 onChange={(event) => {
-                  setInfo((prev) => ({ ...prev, teamName: event.target.value }));
+                  setInfo((prev) => ({ ...prev, firstName: event.target.value }));
                   if (infoError) setInfoError("");
                 }}
               />
               <Input
-                placeholder="Participant Name"
-                value={info.participantName}
+                placeholder="Last Name"
+                value={info.lastName}
                 onChange={(event) => {
-                  setInfo((prev) => ({ ...prev, participantName: event.target.value }));
+                  setInfo((prev) => ({ ...prev, lastName: event.target.value }));
                   if (infoError) setInfoError("");
                 }}
               />
@@ -228,8 +280,8 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
                   if (infoError) setInfoError("");
                 }}
               />
-              <Button onClick={handleContinueToRoster} disabled={step === 2}>
-                {step === 2 ? "Roster unlocked" : "Continue to Roster"}
+              <Button onClick={handleContinueToRoster} disabled={step === 2 || checkingEmail}>
+                {step === 2 ? "Roster unlocked" : checkingEmail ? "Checking..." : "Continue to Roster"}
               </Button>
               {infoError && <p className="text-xs text-red-600">{infoError}</p>}
             </CardContent>
@@ -320,12 +372,16 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
                   <span className="font-medium text-slate-900">{positionSummary.TE} / {positionCounts.TE}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Ks</span>
-                  <span className="font-medium text-slate-900">{positionSummary.K} / {positionCounts.K}</span>
+                  <span>FLEX</span>
+                  <span className="font-medium text-slate-900">{flexCount} / {positionCounts.FLEX}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>DSTs</span>
                   <span className="font-medium text-slate-900">{positionSummary.DST} / {positionCounts.DST}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Ks</span>
+                  <span className="font-medium text-slate-900">{positionSummary.K} / {positionCounts.K}</span>
                 </div>
               </div>
               <div className="space-y-2">
@@ -372,6 +428,38 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
           </Card>
         </div>
       </div>
+
+      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Roster Complete</DialogTitle>
+            <DialogDescription className="pb-2">
+              You&apos;ve selected 14 players for {info.firstName} {info.lastName}. Submit now or keep editing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+            {entrySlotOrder.map((slot) => {
+              const player = roster[slot];
+              return (
+                <div key={slot} className="flex items-center justify-between gap-3 border-b border-slate-200 py-2 last:border-b-0">
+                  <span className="text-xs font-semibold text-slate-500">{slot}</span>
+                  <span className="text-right text-slate-700">
+                    {player ? `${player.name} (${player.teamAbbreviation})` : "Open"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubmitDialog(false)}>
+              Keep Editing
+            </Button>
+            <Button onClick={handleSubmit} disabled={!rosterErrors.valid || isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Entry"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

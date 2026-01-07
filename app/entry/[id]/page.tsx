@@ -32,8 +32,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
     <div className="container space-y-8">
       <div className="space-y-2">
         <Badge variant="secondary">Entry</Badge>
-        <h1 className="font-display text-4xl text-slate-900">{entry.entry.teamName}</h1>
-        <p className="text-slate-600">{entry.entry.participantName}</p>
+        <h1 className="font-display text-4xl text-slate-900">{entry.entry.participantName}</h1>
+        <p className="text-slate-600">{entry.entry.email}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">

@@ -19,7 +19,7 @@ export default async function AdminDashboard() {
       const pointsByPlayer = new Map(detail!.playerPoints.map((player) => [player.playerId, player]));
       return {
         entryId: detail!.entry.id,
-        teamName: detail!.entry.teamName,
+        teamName: detail!.entry.participantName,
         participantName: detail!.entry.participantName,
         email: detail!.entry.email,
         paid: detail!.entry.paid,

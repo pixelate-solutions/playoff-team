@@ -9,6 +9,7 @@ import { getSetting } from "@/lib/settings";
 export async function POST(request: Request) {
   try {
     const payload = createEntrySchema.parse(await request.json());
+    const fullName = `${payload.firstName.trim()} ${payload.lastName.trim()}`.trim();
 
     const entriesLocked = await getSetting("entries_locked", false);
     if (entriesLocked) {
@@ -82,8 +83,8 @@ export async function POST(request: Request) {
     const [entry] = await db
       .insert(entries)
       .values({
-        teamName: payload.teamName,
-        participantName: payload.participantName,
+        teamName: fullName,
+        participantName: fullName,
         email: payload.email,
       })
       .returning();

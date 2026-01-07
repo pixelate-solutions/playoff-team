@@ -118,7 +118,7 @@ export function MyEntryClient() {
       const url = new URL(window.location.href);
       url.searchParams.set("entryId", payload.id);
       window.history.replaceState(null, "", url.toString());
-      toast.success(`Entry found: ${payload.teamName}`);
+      toast.success(`Entry found: ${payload.participantName}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lookup failed");
     } finally {
@@ -230,12 +230,12 @@ export function MyEntryClient() {
                 <Button className="sm:hidden" variant="outline" size="sm" onClick={handleChangeEmail}>
                   <span>New roster search</span>
                 </Button>
-                <CardTitle>{data.entry.teamName}</CardTitle>
+                <CardTitle>{data.entry.participantName}</CardTitle>
                 <Button className="hidden sm:inline" variant="outline" size="sm" onClick={handleChangeEmail}>
                   <span>New roster search</span>
                 </Button>
               </div>
-              <CardDescription>{data.entry.participantName} - {data.entry.email}</CardDescription>
+              <CardDescription>{data.entry.email}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
