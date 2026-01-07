@@ -178,7 +178,7 @@ export function AdminScoreboardClient({
   }
 
   function selectAllRounds() {
-    setSelectedRounds(rounds);
+    setSelectedRounds([...rounds]);
   }
 
   function deselectAllRounds() {
