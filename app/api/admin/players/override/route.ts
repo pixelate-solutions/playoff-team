@@ -14,9 +14,12 @@ export async function POST(request: Request) {
   try {
     const payload = adminPlayerOverrideSchema.parse(await request.json());
 
+    const overrideValue =
+      payload.playoffOverridePoints === null ? null : String(payload.playoffOverridePoints);
+
     const [updated] = await db
       .update(players)
-      .set({ playoffOverridePoints: payload.playoffOverridePoints })
+      .set({ playoffOverridePoints: overrideValue })
       .where(eq(players.id, payload.playerId))
       .returning();
 
