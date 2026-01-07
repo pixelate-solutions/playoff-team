@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { MobileNav } from "@/components/site/mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,8 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/70 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-glow">
-            <span className="font-display text-xl">PF</span>
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-sm shadow-glow">
+            <Image src="/nfl-playoff.png" alt="NFL Playoff" width={40} height={40} className="h-full w-full object-contain" />
           </div>
           <div>
             <p className="font-display text-2xl tracking-wide text-slate-900">Playoff Fantasy</p>
