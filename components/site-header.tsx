@@ -7,6 +7,7 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/my-entry", label: "My Roster" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/chat", label: "Chat" },
   { href: "/rules", label: "Rules & Scoring" },
   { href: "/admin", label: "Admin" },
 ];

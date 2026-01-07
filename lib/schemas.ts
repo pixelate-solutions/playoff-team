@@ -106,6 +106,11 @@ export const adminEntryUpdateSchema = z.object({
   email: z.string().email().optional(),
 });
 
+export const chatMessageSchema = z.object({
+  entryId: z.string().uuid().optional(),
+  message: z.string().min(1).max(500),
+});
+
 export const adminSettingsSchema = z.object({
   entriesLocked: z.boolean().optional(),
   currentRound: z.enum(["Wildcard", "Divisional", "Conference", "SuperBowl"]).optional(),
