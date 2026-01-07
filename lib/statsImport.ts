@@ -60,12 +60,17 @@ type GameGroup = {
 };
 
 function normalizeName(value: string) {
-  return value
+  const normalized = value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9]+/g, " ")
     .trim()
     .toLowerCase();
+  const suffixes = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+  const tokens = normalized
+    .split(/\s+/)
+    .filter((token) => token && !suffixes.has(token));
+  return tokens.join("");
 }
 
 function parseKickoffAt(value?: string) {
