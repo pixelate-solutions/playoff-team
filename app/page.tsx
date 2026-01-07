@@ -39,7 +39,7 @@ export default async function HomePage() {
             <span>70/15/10/5 payout split</span>
             <span>ESPN stat updates</span>
           </div>
-          <Card className="glass-card mx-auto w-full lg:w-3/4 mt-4 lg:mt-8">
+          <Card className="glass-card mx-auto w-4/5 mt-4 lg:mt-8">
             <CardHeader className="pb-2">
               <CardTitle className="text-base text-slate-700">Money Pool</CardTitle>
               <CardDescription>Live total based on entries.</CardDescription>
