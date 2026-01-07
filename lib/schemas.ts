@@ -100,7 +100,8 @@ export const adminRosterUpdateSchema = z.object({
 });
 
 export const adminSettingsSchema = z.object({
-  entriesLocked: z.boolean(),
+  entriesLocked: z.boolean().optional(),
   currentRound: z.enum(["Wildcard", "Divisional", "Conference", "SuperBowl"]).optional(),
   seasonYear: z.number().int().optional(),
+  leaderboardLinksEnabled: z.boolean().optional(),
 });

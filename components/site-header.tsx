@@ -21,7 +21,7 @@ export function SiteHeader() {
           </div>
           <div>
             <p className="font-display text-2xl tracking-wide text-slate-900">Playoff Fantasy</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">2025 Challenge</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">2026 Challenge</p>
           </div>
         </Link>
         <nav className="hidden items-center gap-6 lg:flex">

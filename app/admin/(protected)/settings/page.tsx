@@ -13,7 +13,7 @@ const rounds = ["Wildcard", "Divisional", "Conference", "SuperBowl"] as const;
 export default function AdminSettingsPage() {
   const [entriesLocked, setEntriesLocked] = useState(false);
   const [currentRound, setCurrentRound] = useState<(typeof rounds)[number]>("Wildcard");
-  const [seasonYear, setSeasonYear] = useState("2025");
+  const [seasonYear, setSeasonYear] = useState("2026");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function AdminSettingsPage() {
       .then((data) => {
         setEntriesLocked(Boolean(data.entriesLocked));
         setCurrentRound(data.currentRound ?? "Wildcard");
-        setSeasonYear(String(data.seasonYear ?? "2025"));
+        setSeasonYear(String(data.seasonYear ?? "2026"));
       });
   }, []);
 

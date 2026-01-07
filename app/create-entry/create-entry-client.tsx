@@ -50,6 +50,7 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [info, setInfo] = useState({ teamName: "", participantName: "", email: "" });
+  const [infoError, setInfoError] = useState("");
   const [roster, setRoster] = useState<Record<EntrySlot, PlayerOption | null>>(emptyRoster);
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("QB");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +83,23 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
     }));
     return validateRoster(rosterPlayers);
   }, [selectedPlayers]);
+
+  const isInfoValid = useMemo(() => {
+    const teamName = info.teamName.trim();
+    const participantName = info.participantName.trim();
+    const email = info.email.trim();
+    const emailValid = /\S+@\S+\.\S+/.test(email);
+    return teamName.length >= 2 && participantName.length >= 2 && emailValid;
+  }, [info]);
+
+  function handleContinueToRoster() {
+    if (!isInfoValid) {
+      setInfoError("Please enter a team name (2+ chars), participant name (2+ chars), and a valid email.");
+      return;
+    }
+    setInfoError("");
+    setStep(2);
+  }
 
   const playersByTab = useMemo(() => {
     if (activeTab === "FLEX") {
@@ -173,7 +191,7 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
     <div className="container space-y-8">
       <div className="space-y-2">
         <Badge variant="secondary">Create Entry</Badge>
-        <h1 className="font-display text-4xl text-slate-900">Draft Your 2025 Playoff Team</h1>
+        <h1 className="font-display text-4xl text-slate-900">Draft Your 2026 Playoff Team</h1>
         <p className="text-slate-600">Two steps. One roster. Playoff survival starts now.</p>
       </div>
 
@@ -188,22 +206,32 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
               <Input
                 placeholder="Team Name"
                 value={info.teamName}
-                onChange={(event) => setInfo((prev) => ({ ...prev, teamName: event.target.value }))}
+                onChange={(event) => {
+                  setInfo((prev) => ({ ...prev, teamName: event.target.value }));
+                  if (infoError) setInfoError("");
+                }}
               />
               <Input
                 placeholder="Participant Name"
                 value={info.participantName}
-                onChange={(event) => setInfo((prev) => ({ ...prev, participantName: event.target.value }))}
+                onChange={(event) => {
+                  setInfo((prev) => ({ ...prev, participantName: event.target.value }));
+                  if (infoError) setInfoError("");
+                }}
               />
               <Input
                 placeholder="Email"
                 type="email"
                 value={info.email}
-                onChange={(event) => setInfo((prev) => ({ ...prev, email: event.target.value }))}
+                onChange={(event) => {
+                  setInfo((prev) => ({ ...prev, email: event.target.value }));
+                  if (infoError) setInfoError("");
+                }}
               />
-              <Button onClick={() => setStep(2)} disabled={!info.teamName || !info.participantName || !info.email}>
-                Continue to Roster
+              <Button onClick={handleContinueToRoster} disabled={step === 2}>
+                {step === 2 ? "Roster unlocked" : "Continue to Roster"}
               </Button>
+              {infoError && <p className="text-xs text-red-600">{infoError}</p>}
             </CardContent>
           </Card>
 

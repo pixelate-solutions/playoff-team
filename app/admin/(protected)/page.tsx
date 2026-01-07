@@ -37,11 +37,13 @@ export default async function AdminDashboard() {
     });
 
   const currentRound = await getSetting("current_round", "Wildcard");
+  const leaderboardLinksEnabled = await getSetting("leaderboard_links_enabled", true);
 
   return (
     <AdminScoreboardClient
       entries={entriesWithRoster}
       initialRound={currentRound as "Wildcard" | "Divisional" | "Conference" | "SuperBowl"}
+      initialLeaderboardLinksEnabled={Boolean(leaderboardLinksEnabled)}
     />
   );
 }

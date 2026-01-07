@@ -10,9 +10,10 @@ export async function GET() {
   }
   const entriesLocked = await getSetting("entries_locked", false);
   const currentRound = await getSetting("current_round", "Wildcard");
-  const seasonYear = await getSetting("season_year", 2025);
+  const seasonYear = await getSetting("season_year", 2026);
+  const leaderboardLinksEnabled = await getSetting("leaderboard_links_enabled", true);
 
-  return NextResponse.json({ entriesLocked, currentRound, seasonYear });
+  return NextResponse.json({ entriesLocked, currentRound, seasonYear, leaderboardLinksEnabled });
 }
 
 export async function POST(request: Request) {
@@ -23,7 +24,9 @@ export async function POST(request: Request) {
 
   try {
     const payload = adminSettingsSchema.parse(await request.json());
-    await setSetting("entries_locked", payload.entriesLocked);
+    if (payload.entriesLocked !== undefined) {
+      await setSetting("entries_locked", payload.entriesLocked);
+    }
 
     if (payload.currentRound) {
       await setSetting("current_round", payload.currentRound);
@@ -31,6 +34,10 @@ export async function POST(request: Request) {
 
     if (payload.seasonYear) {
       await setSetting("season_year", payload.seasonYear);
+    }
+
+    if (payload.leaderboardLinksEnabled !== undefined) {
+      await setSetting("leaderboard_links_enabled", payload.leaderboardLinksEnabled);
     }
 
     return NextResponse.json({ ok: true });

@@ -8,6 +8,7 @@ import { AdminLogoutButton } from "@/components/admin/logout-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sortRosterBySlot } from "@/lib/roster";
@@ -49,15 +50,19 @@ type AdminEntry = {
 export function AdminScoreboardClient({
   entries,
   initialRound,
+  initialLeaderboardLinksEnabled,
 }: {
   entries: AdminEntry[];
   initialRound: (typeof rounds)[number];
+  initialLeaderboardLinksEnabled: boolean;
 }) {
   const router = useRouter();
   const [selectedRounds, setSelectedRounds] = useState<(typeof rounds)[number][]>([initialRound]);
   const [mode, setMode] = useState<(typeof modes)[number]>("playoff");
   const [selectedWeeks, setSelectedWeeks] = useState<number[]>([1]);
   const [search, setSearch] = useState("");
+  const [leaderboardLinksEnabled, setLeaderboardLinksEnabled] = useState(initialLeaderboardLinksEnabled);
+  const [linksLoading, setLinksLoading] = useState(false);
   const [overrideValues, setOverrideValues] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
     entries.forEach((entry) => {
@@ -185,6 +190,25 @@ export function AdminScoreboardClient({
     setSelectedRounds([]);
   }
 
+  async function handleLeaderboardLinksChange(nextValue: boolean) {
+    setLeaderboardLinksEnabled(nextValue);
+    setLinksLoading(true);
+    try {
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leaderboardLinksEnabled: nextValue }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Failed to update setting");
+      toast.success(nextValue ? "Leaderboard links enabled." : "Leaderboard links disabled.");
+    } catch (error) {
+      setLeaderboardLinksEnabled((prev) => !prev);
+      toast.error(error instanceof Error ? error.message : "Update failed");
+    } finally {
+      setLinksLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -288,11 +312,22 @@ export function AdminScoreboardClient({
       </Card>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="space-y-1">
           <h2 className="font-display text-2xl text-slate-900">Teams</h2>
           <p className="text-sm text-slate-500">
             Showing {filteredCount} of {entryCount} entries
           </p>
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Checkbox
+              checked={leaderboardLinksEnabled}
+              disabled={linksLoading}
+              onCheckedChange={(value) => {
+                if (value === "indeterminate") return;
+                handleLeaderboardLinksChange(value);
+              }}
+            />
+            <span>Leaderboard links enabled</span>
+          </div>
         </div>
         <Input
           className="w-full sm:max-w-xs"
@@ -325,6 +360,7 @@ export function AdminScoreboardClient({
                   <TableRow>
                     <TableHead>Slot</TableHead>
                     <TableHead>Player</TableHead>
+                    <TableHead>Team</TableHead>
                     <TableHead>Pos</TableHead>
                     <TableHead>Points</TableHead>
                     <TableHead>Override</TableHead>
@@ -337,8 +373,8 @@ export function AdminScoreboardClient({
                       <TableCell>{player.slot}</TableCell>
                       <TableCell>
                         <div className="font-medium text-slate-900">{player.playerName}</div>
-                        <div className="text-xs text-slate-500">{player.teamAbbreviation}</div>
                       </TableCell>
+                      <TableCell>{player.teamAbbreviation}</TableCell>
                       <TableCell>{player.position}</TableCell>
                       <TableCell>{player.totalPoints.toFixed(2)}</TableCell>
                       <TableCell>

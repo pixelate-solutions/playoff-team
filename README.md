@@ -1,4 +1,4 @@
-# 2025 NFL Playoff Fantasy Challenge
+# 2026 NFL Playoff Fantasy Challenge
 
 Production-ready Next.js 15 app for running a playoff fantasy pool with roster validation, admin tooling, and ESPN/CSV stat importing.
 

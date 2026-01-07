@@ -15,7 +15,13 @@ export type LeaderboardItem = {
   totalPoints: number;
 };
 
-export function LeaderboardClient({ initialData }: { initialData: LeaderboardItem[] }) {
+export function LeaderboardClient({
+  initialData,
+  linksEnabled,
+}: {
+  initialData: LeaderboardItem[];
+  linksEnabled: boolean;
+}) {
   const [showAll, setShowAll] = useState(false);
   const [sortDesc, setSortDesc] = useState(true);
 
@@ -63,9 +69,13 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardIte
                 <TableRow key={entry.id}>
                   <TableCell>#{index + 1}</TableCell>
                   <TableCell>
-                    <Link className="font-medium text-slate-900 hover:underline" href={`/entry/${entry.id}`}>
-                      {entry.teamName}
-                    </Link>
+                    {linksEnabled ? (
+                      <Link className="font-medium text-slate-900 hover:underline" href={`/entry/${entry.id}`}>
+                        {entry.teamName}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-slate-900">{entry.teamName}</span>
+                    )}
                     <div className="text-xs text-slate-500 md:hidden">{entry.participantName}</div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{entry.participantName}</TableCell>

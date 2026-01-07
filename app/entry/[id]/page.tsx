@@ -48,6 +48,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 <TableRow>
                   <TableHead>Slot</TableHead>
                   <TableHead>Player</TableHead>
+                  <TableHead>Team</TableHead>
                   <TableHead>Pos</TableHead>
                   <TableHead>Pts</TableHead>
                 </TableRow>
@@ -67,9 +68,9 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                       <TableCell>{player.slot}</TableCell>
                       <TableCell>
                         <div className="font-medium text-slate-900">{player.playerName}</div>
-                        <div className="text-xs text-slate-500">{player.teamAbbreviation}</div>
                         {roundLine && <div className="text-[11px] text-slate-400">{roundLine}</div>}
                       </TableCell>
+                      <TableCell>{player.teamAbbreviation}</TableCell>
                       <TableCell>{player.position}</TableCell>
                       <TableCell>{points?.totalPoints.toFixed(2) ?? "0.00"}</TableCell>
                     </TableRow>

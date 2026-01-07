@@ -10,15 +10,18 @@ import { MoneyPoolCounter } from "@/components/money-pool-counter";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(entries);
-  const entryCount = Number(count ?? 0);
-  const moneyPool = entryCount * 100;
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(entries)
+    .where(sql`${entries.paid} = true`);
+  const paidCount = Number(count ?? 0);
+  const moneyPool = paidCount * 100;
 
   return (
     <div className="container">
       <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="flex flex-col justify-center gap-6">
-          <Badge variant="secondary" className="w-fit">2025 NFL Playoff Fantasy Challenge</Badge>
+          <Badge variant="secondary" className="w-fit">2026 NFL Playoff Fantasy Challenge</Badge>
           <h1 className="font-display text-5xl leading-tight text-slate-900 md:text-6xl">
             Draft one player per playoff team. Survive every round.
           </h1>
@@ -53,7 +56,8 @@ export default async function HomePage() {
                   <MoneyPoolCounter amount={moneyPool} />
                 </span>
               </div>
-              <p className="mt-2 text-xs text-slate-500">Based on {entryCount} teams.</p>
+              <p className={`mt-2 text-xs text-slate-500 ${paidCount <= 1 && "hidden"}`}>Based on {paidCount} paid teams.</p>
+              <p className={`mt-2 text-xs text-slate-500 ${paidCount > 1 && "hidden"}`}>Based on {paidCount} paid team.</p>
             </CardContent>
           </Card>
           <Card className="glass-card">

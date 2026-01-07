@@ -119,7 +119,7 @@ function hasStatValues(stat: NormalizedStat) {
 }
 
 function parseFieldGoalText(text: string) {
-  const match = text.match(/^(.+?)\s+(\\d{1,2})\\s*Yd\\s+Field Goal/i);
+  const match = text.match(/^(.+?)\s+(\d{1,3})\s*Yd\s+Field Goal/i);
   if (!match) return null;
   return { kickerName: match[1].trim(), distance: Number(match[2]) };
 }
@@ -223,6 +223,24 @@ export async function fetchEspnStats(params: {
       const teamAbbr = team.team?.abbreviation ?? "";
       if (!teamAbbr) continue;
 
+      const defenseEligibleAthletes = new Set<string>();
+      for (const category of team.statistics ?? []) {
+        const categoryName = (category.name ?? "").toLowerCase();
+        if (
+          categoryName === "defensive" ||
+          categoryName === "interceptions" ||
+          categoryName === "kickreturns" ||
+          categoryName === "puntreturns"
+        ) {
+          for (const athleteStat of category.athletes ?? []) {
+            const athleteId = athleteStat.athlete?.id;
+            if (athleteId) {
+              defenseEligibleAthletes.add(athleteId);
+            }
+          }
+        }
+      }
+
       for (const category of team.statistics ?? []) {
         const categoryName = (category.name ?? "").toLowerCase();
         const keys = category.keys ?? [];
@@ -302,7 +320,10 @@ export async function fetchEspnStats(params: {
 
           if (categoryName === "fumbles") {
             const defense = getOrCreateDefense(teamDefense, teamAbbr);
-            defense.fumbleRecoveries += getStatValue(keys, stats, "fumblesRecovered");
+            const recovered = getStatValue(keys, stats, "fumblesRecovered");
+            if (recovered && defenseEligibleAthletes.has(athleteId)) {
+              defense.fumbleRecoveries += recovered;
+            }
           }
 
           if (categoryName === "kickreturns") {

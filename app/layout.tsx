@@ -17,7 +17,7 @@ const bodyFont = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "2025 NFL Playoff Fantasy Challenge",
+  title: "2026 NFL Playoff Fantasy Challenge",
   description: "Draft one player per playoff team and battle through every round.",
 };
 
@@ -34,7 +34,7 @@ export default function RootLayout({
           <main className="flex-1 pb-16 pt-6">{children}</main>
           <SiteFooter />
         </div>
-        <Toaster richColors position="top-right" />
+        <Toaster className="mt-10" richColors position="top-right" />
       </body>
     </html>
   );
