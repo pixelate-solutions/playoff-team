@@ -62,6 +62,7 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [roster, setRoster] = useState<Record<EntrySlot, PlayerOption | null>>(emptyRoster);
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("QB");
+  const [playerSearch, setPlayerSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const prevSelectedCount = useRef(0);
@@ -170,6 +171,23 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
     });
     return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [playersByTab]);
+
+  const filteredGroupedPlayers = useMemo(() => {
+    const query = playerSearch.trim().toLowerCase();
+    if (!query) return groupedPlayers;
+    return groupedPlayers
+      .map(([teamLabel, teamPlayers]) => [
+        teamLabel,
+        teamPlayers.filter((player) => {
+          const nameMatch = player.name.toLowerCase().includes(query);
+          const teamMatch =
+            player.teamAbbreviation.toLowerCase().includes(query) ||
+            player.teamName.toLowerCase().includes(query);
+          return nameMatch || teamMatch;
+        }),
+      ])
+      .filter(([, teamPlayers]) => teamPlayers.length > 0);
+  }, [groupedPlayers, playerSearch]);
 
   function handleAddPlayer(player: PlayerOption) {
     if (usedTeamIds.has(player.nflTeamId)) {
@@ -302,10 +320,17 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
                       </TabsTrigger>
                     ))}
                   </TabsList>
+                  <div className="mt-4">
+                    <Input
+                      placeholder="Search players or teams..."
+                      value={playerSearch}
+                      onChange={(event) => setPlayerSearch(event.target.value)}
+                    />
+                  </div>
                   {tabs.map((tab) => (
                     <TabsContent key={tab} value={tab}>
                       <div className="space-y-6">
-                        {groupedPlayers.map(([teamLabel, teamPlayers]) => (
+                        {filteredGroupedPlayers.map(([teamLabel, teamPlayers]) => (
                           <div key={teamLabel} className="space-y-3">
                             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{teamLabel}</div>
                             <div className="grid gap-4 md:grid-cols-2">
