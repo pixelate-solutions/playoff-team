@@ -176,16 +176,16 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
     const query = playerSearch.trim().toLowerCase();
     if (!query) return groupedPlayers;
     return groupedPlayers
-      .map(([teamLabel, teamPlayers]) => [
-        teamLabel,
-        teamPlayers.filter((player) => {
+      .map(([teamLabel, teamPlayers]) => {
+        const filtered = teamPlayers.filter((player) => {
           const nameMatch = player.name.toLowerCase().includes(query);
           const teamMatch =
             player.teamAbbreviation.toLowerCase().includes(query) ||
             player.teamName.toLowerCase().includes(query);
           return nameMatch || teamMatch;
-        }),
-      ])
+        });
+        return [teamLabel, filtered] as [string, PlayerOption[]];
+      })
       .filter(([, teamPlayers]) => teamPlayers.length > 0);
   }, [groupedPlayers, playerSearch]);
 
