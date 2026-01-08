@@ -361,7 +361,6 @@ export default function AdminEntryDetailPage() {
                 <TableHead>Slot</TableHead>
                 <TableHead>Player</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Pos</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -371,7 +370,6 @@ export default function AdminEntryDetailPage() {
                   <TableCell>{player.slot}</TableCell>
                   <TableCell>{player.playerName}</TableCell>
                   <TableCell>{player.teamAbbreviation}</TableCell>
-                  <TableCell>{player.position}</TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" onClick={() => handleRemove(player.playerId, player.slot)}>
                       Remove

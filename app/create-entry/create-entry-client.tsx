@@ -295,7 +295,7 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
               </CardHeader>
               <CardContent>
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as (typeof tabs)[number])}>
-                  <TabsList className="flex flex-wrap gap-2">
+                  <TabsList className="flex h-auto flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm">
                     {tabs.map((tab) => (
                       <TabsTrigger key={tab} value={tab}>
                         {tab}
@@ -311,11 +311,14 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
                             <div className="grid gap-4 md:grid-cols-2">
                               {teamPlayers.map((player) => {
                                 const teamUsed = usedTeamIds.has(player.nflTeamId);
+                                const selectedSlot = Object.entries(roster).find(
+                                  ([, rosterPlayer]) => rosterPlayer?.id === player.id
+                                )?.[0] as EntrySlot | undefined;
                                 return (
                                 <div
                                   key={player.id}
                                   className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${
-                                    teamUsed ? "opacity-50 grayscale" : ""
+                                    teamUsed && !selectedSlot ? "opacity-50 grayscale" : ""
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -327,11 +330,17 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
                                   </div>
                                   <Button
                                     className="mt-4 w-full"
-                                    variant="secondary"
-                                    onClick={() => handleAddPlayer(player)}
-                                    disabled={teamUsed}
+                                    variant={selectedSlot ? "destructive" : "secondary"}
+                                    onClick={() => {
+                                      if (selectedSlot) {
+                                        handleRemove(selectedSlot);
+                                        return;
+                                      }
+                                      handleAddPlayer(player);
+                                    }}
+                                    disabled={Boolean(teamUsed && !selectedSlot)}
                                   >
-                                    {teamUsed ? "Team Used" : "Add Player"}
+                                    {selectedSlot ? "Remove" : teamUsed ? "Team Used" : "Add Player"}
                                   </Button>
                                 </div>
                               )})}

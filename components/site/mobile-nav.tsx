@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,10 @@ interface NavItem {
 }
 
 export function MobileNav({ navItems }: { navItems: NavItem[] }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="lg:hidden">
           <Menu className="h-5 w-5" />
@@ -30,7 +33,12 @@ export function MobileNav({ navItems }: { navItems: NavItem[] }) {
         </SheetHeader>
         <div className="mt-6 flex flex-col gap-4">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="text-base font-medium text-slate-700">
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-base font-medium text-slate-700"
+              onClick={() => setOpen(false)}
+            >
               {item.label}
             </Link>
           ))}

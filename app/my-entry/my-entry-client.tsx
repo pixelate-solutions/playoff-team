@@ -237,15 +237,15 @@ export function MyEntryClient() {
               </div>
               <CardDescription>{data.entry.email}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Slot</TableHead>
-                    <TableHead>Player</TableHead>
-                    <TableHead>Team</TableHead>
-                    <TableHead>Pos</TableHead>
-                    <TableHead>Pts</TableHead>
+                    <TableHead className="px-2 sm:px-4">Slot</TableHead>
+                    <TableHead className="px-2 sm:px-4">Player</TableHead>
+                    <TableHead className="px-2 sm:px-4">Team</TableHead>
+                    <TableHead className="hidden px-2 sm:table-cell sm:px-4">Pos</TableHead>
+                    <TableHead className="px-2 sm:px-4">Pts</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -260,14 +260,14 @@ export function MyEntryClient() {
                       : null;
                     return (
                       <TableRow key={player.playerId}>
-                        <TableCell>{player.slot}</TableCell>
-                        <TableCell>
+                        <TableCell className="px-2 sm:px-4">{player.slot}</TableCell>
+                        <TableCell className="px-2 sm:px-4">
                           <div className="font-medium text-slate-900">{player.playerName}</div>
                           {roundLine && <div className="text-[11px] text-slate-400">{roundLine}</div>}
                         </TableCell>
-                        <TableCell>{player.teamAbbreviation}</TableCell>
-                        <TableCell>{player.position}</TableCell>
-                        <TableCell>{points?.totalPoints.toFixed(2) ?? "0.00"}</TableCell>
+                        <TableCell className="px-2 sm:px-4">{player.teamAbbreviation}</TableCell>
+                        <TableCell className="hidden px-2 sm:table-cell sm:px-4">{player.position}</TableCell>
+                        <TableCell className="px-2 sm:px-4">{points?.totalPoints.toFixed(2) ?? "0.00"}</TableCell>
                       </TableRow>
                     );
                   })}

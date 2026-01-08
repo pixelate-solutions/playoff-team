@@ -391,14 +391,24 @@ export function AdminScoreboardClient({
                 <CardTitle>{entry.participantName}</CardTitle>
                 <CardDescription className="text-xs text-slate-500">{entry.email}</CardDescription>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge variant={entry.paid ? "success" : "outline"}>{entry.paid ? "Paid" : "Unpaid"}</Badge>
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                <Badge
+                  variant={entry.paid ? "success" : "outline"}
+                  className="justify-center"
+                >
+                  {entry.paid ? "Paid" : "Unpaid"}
+                </Badge>
                 <span className="text-sm text-slate-500">Total</span>
                 <span className="text-2xl font-display text-slate-900">{entry.totalPoints.toFixed(2)}</span>
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                   <Link href={`/admin/entries/${entry.entryId}`}>Edit Roster</Link>
                 </Button>
-                <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(entry)}>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                  onClick={() => setDeleteTarget(entry)}
+                >
                   Delete
                 </Button>
               </div>
@@ -410,7 +420,6 @@ export function AdminScoreboardClient({
                     <TableHead>Slot</TableHead>
                     <TableHead>Player</TableHead>
                     <TableHead>Team</TableHead>
-                    <TableHead>Pos</TableHead>
                     <TableHead>Points</TableHead>
                     <TableHead>Override</TableHead>
                     <TableHead>Action</TableHead>
@@ -424,7 +433,6 @@ export function AdminScoreboardClient({
                         <div className="font-medium text-slate-900">{player.playerName}</div>
                       </TableCell>
                       <TableCell>{player.teamAbbreviation}</TableCell>
-                      <TableCell>{player.position}</TableCell>
                       <TableCell>{player.totalPoints.toFixed(2)}</TableCell>
                       <TableCell>
                         <Input
