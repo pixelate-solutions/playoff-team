@@ -58,10 +58,12 @@ type AdminEntry = {
 export function AdminScoreboardClient({
   entries,
   initialLeaderboardLinksEnabled,
+  initialEntriesLocked,
 }: {
   entries: AdminEntry[];
   initialRound: (typeof rounds)[number];
   initialLeaderboardLinksEnabled: boolean;
+  initialEntriesLocked: boolean;
 }) {
   const router = useRouter();
   const [selectedRounds, setSelectedRounds] = useState<(typeof rounds)[number][]>([]);
@@ -71,6 +73,8 @@ export function AdminScoreboardClient({
   const [paidFilter, setPaidFilter] = useState<"all" | "paid" | "unpaid">("all");
   const [leaderboardLinksEnabled, setLeaderboardLinksEnabled] = useState(initialLeaderboardLinksEnabled);
   const [linksLoading, setLinksLoading] = useState(false);
+  const [entriesLocked, setEntriesLocked] = useState(initialEntriesLocked);
+  const [entriesLockedLoading, setEntriesLockedLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [overrideValues, setOverrideValues] = useState<Record<string, string>>(() => {
@@ -244,6 +248,26 @@ export function AdminScoreboardClient({
     }
   }
 
+  async function handleEntriesLockedChange(nextValue: boolean) {
+    setEntriesLocked(nextValue);
+    setEntriesLockedLoading(true);
+    try {
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entriesLocked: nextValue }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Failed to update setting");
+      toast.success(nextValue ? "Drafting locked." : "Drafting enabled.");
+    } catch (error) {
+      setEntriesLocked((prev) => !prev);
+      toast.error(error instanceof Error ? error.message : "Update failed");
+    } finally {
+      setEntriesLockedLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -351,16 +375,29 @@ export function AdminScoreboardClient({
           <p className="text-sm text-slate-500">
             Showing {filteredCount} of {entryCount} entries
           </p>
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Checkbox
-              checked={leaderboardLinksEnabled}
-              disabled={linksLoading}
-              onCheckedChange={(value) => {
-                if (value === "indeterminate") return;
-                handleLeaderboardLinksChange(value);
-              }}
-            />
-            <span>Leaderboard links enabled</span>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={leaderboardLinksEnabled}
+                disabled={linksLoading}
+                onCheckedChange={(value) => {
+                  if (value === "indeterminate") return;
+                  handleLeaderboardLinksChange(value);
+                }}
+              />
+              <span>Leaderboard links enabled</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={entriesLocked}
+                disabled={entriesLockedLoading}
+                onCheckedChange={(value) => {
+                  if (value === "indeterminate") return;
+                  handleEntriesLockedChange(value);
+                }}
+              />
+              <span>Drafting locked</span>
+            </div>
           </div>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">

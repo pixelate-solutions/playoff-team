@@ -63,7 +63,15 @@ const emptyRoster = entrySlotOrder.reduce((acc, slot) => {
   return acc;
 }, {} as Record<EntrySlot, PlayerOption | null>);
 
-export function CreateEntryClient({ players, teams }: { players: PlayerOption[]; teams: TeamOption[] }) {
+export function CreateEntryClient({
+  players,
+  teams,
+  entriesLocked,
+}: {
+  players: PlayerOption[];
+  teams: TeamOption[];
+  entriesLocked: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [info, setInfo] = useState({ firstName: "", lastName: "", email: "" });
@@ -483,6 +491,18 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
           </Card>
         </div>
       </div>
+
+      <Dialog open={entriesLocked} onOpenChange={() => {}}>
+        <DialogContent className="[&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle>Draft Closed</DialogTitle>
+            <DialogDescription>The draft has ended since the playoffs have started.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => router.back()}>Okay</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <DialogContent>
