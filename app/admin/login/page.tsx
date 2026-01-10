@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +26,7 @@ export default function AdminLoginPage() {
       }
 
       toast.success("Welcome, commissioner.");
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
