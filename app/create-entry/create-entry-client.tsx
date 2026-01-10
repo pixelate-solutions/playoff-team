@@ -29,6 +29,15 @@ const slotPriority: Record<PlayerOption["position"], EntrySlot[]> = {
 };
 
 const tabs = ["QB", "RB", "WR", "TE", "FLEX", "DST", "K"] as const;
+const tabLabels: Record<(typeof tabs)[number], string> = {
+  QB: "QBs",
+  RB: "RBs",
+  WR: "WRs",
+  TE: "TEs",
+  FLEX: "FLEX",
+  DST: "DSTs",
+  K: "Ks",
+};
 
 type PlayerOption = {
   id: string;
@@ -93,6 +102,15 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
   }, [roster]);
 
   const flexCount = roster.FLEX ? 1 : 0;
+  const tabCounts: Record<(typeof tabs)[number], string> = {
+    QB: `${positionSummary.QB} / ${positionCounts.QB}`,
+    RB: `${positionSummary.RB} / ${positionCounts.RB}`,
+    WR: `${positionSummary.WR} / ${positionCounts.WR}`,
+    TE: `${positionSummary.TE} / ${positionCounts.TE}`,
+    FLEX: `${flexCount} / ${positionCounts.FLEX}`,
+    DST: `${positionSummary.DST} / ${positionCounts.DST}`,
+    K: `${positionSummary.K} / ${positionCounts.K}`,
+  };
 
   const selectedPlayers = useMemo(() => Object.values(roster).filter(Boolean) as PlayerOption[], [roster]);
 
@@ -316,7 +334,10 @@ export function CreateEntryClient({ players, teams }: { players: PlayerOption[];
                   <TabsList className="flex h-auto flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm">
                     {tabs.map((tab) => (
                       <TabsTrigger key={tab} value={tab}>
-                        {tab}
+                        <span className="flex flex-col items-center leading-tight">
+                          <span>{tabLabels[tab]}</span>
+                          <span className="text-[11px] text-slate-500">{tabCounts[tab]}</span>
+                        </span>
                       </TabsTrigger>
                     ))}
                   </TabsList>
