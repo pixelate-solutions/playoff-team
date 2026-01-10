@@ -59,9 +59,7 @@ export function LeaderboardClient({
               <TableRow>
                 <TableHead>Rank</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead className="hidden md:table-cell">Participant</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead className="hidden md:table-cell">Paid</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -77,9 +75,7 @@ export function LeaderboardClient({
                       <span className="font-medium text-slate-900">{entry.participantName}</span>
                     )}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{entry.participantName}</TableCell>
                   <TableCell>{entry.totalPoints.toFixed(2)}</TableCell>
-                  <TableCell className="hidden md:table-cell">{entry.paid ? "Yes" : "No"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

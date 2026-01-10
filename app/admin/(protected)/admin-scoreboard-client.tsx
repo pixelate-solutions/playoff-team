@@ -57,7 +57,6 @@ type AdminEntry = {
 
 export function AdminScoreboardClient({
   entries,
-  initialRound,
   initialLeaderboardLinksEnabled,
 }: {
   entries: AdminEntry[];
