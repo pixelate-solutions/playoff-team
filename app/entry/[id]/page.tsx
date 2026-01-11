@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlayerScoreDialog } from "@/components/player-score-dialog";
 import { getEntryWithRoster } from "@/lib/entries";
 import { formatRoundLabelShort, sortRoundLabels } from "@/lib/rounds";
 import { sortRosterBySlot } from "@/lib/roster";
@@ -29,7 +30,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
   const roundLabels = sortRoundLabels(Array.from(new Set(Object.keys(roundTotals))));
 
   return (
-    <div className="container space-y-8">
+    <div className="container space-y-8 px-2 sm:px-8">
       <div className="space-y-2">
         <Badge variant="secondary">Entry</Badge>
         <h1 className="font-display text-4xl text-slate-900">{entry.entry.participantName}</h1>
@@ -41,42 +42,46 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <CardTitle>Roster</CardTitle>
             <CardDescription>Player list with round totals.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Slot</TableHead>
-                  <TableHead>Player</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead>Pos</TableHead>
-                  <TableHead>Pts</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedRoster.map((player) => {
-                  const points = pointsByPlayer.get(player.playerId);
-                  const roundLine = points
-                    ? roundLabels
-                        .map(
-                          (round) => `${formatRoundLabelShort(round)} ${points.byRound[round]?.toFixed(2) ?? "0.00"}`
-                        )
-                        .join(" | ")
-                    : null;
-                  return (
-                    <TableRow key={player.playerId}>
-                      <TableCell>{player.slot}</TableCell>
-                      <TableCell>
-                        <div className="font-medium text-slate-900">{player.playerName}</div>
-                        {roundLine && <div className="text-[11px] text-slate-400">{roundLine}</div>}
-                      </TableCell>
-                      <TableCell>{player.teamAbbreviation}</TableCell>
-                      <TableCell>{player.position}</TableCell>
-                      <TableCell>{points?.totalPoints.toFixed(2) ?? "0.00"}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          <CardContent className="px-3 sm:px-6">
+            <div className="w-full overflow-x-auto">
+              <Table className="w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Slot</TableHead>
+                    <TableHead>Player</TableHead>
+                    <TableHead>Team</TableHead>
+                    <TableHead>Pts</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedRoster.map((player) => {
+                    const points = pointsByPlayer.get(player.playerId);
+                    const roundLine = points
+                      ? roundLabels
+                          .map(
+                            (round) => `${formatRoundLabelShort(round)} ${points.byRound[round]?.toFixed(2) ?? "0.00"}`
+                          )
+                          .join(" | ")
+                      : null;
+                    return (
+                      <TableRow key={player.playerId}>
+                        <TableCell>{player.slot}</TableCell>
+                        <TableCell>
+                          <PlayerScoreDialog entryId={entry.entry.id} playerId={player.playerId} playerName={player.playerName}>
+                            <button type="button" className="text-left">
+                              <div className="font-medium text-slate-900 hover:underline">{player.playerName}</div>
+                              {roundLine && <div className="text-[11px] text-slate-400">{roundLine}</div>}
+                            </button>
+                          </PlayerScoreDialog>
+                        </TableCell>
+                        <TableCell>{player.teamAbbreviation}</TableCell>
+                        <TableCell>{points?.totalPoints.toFixed(2) ?? "0.00"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 

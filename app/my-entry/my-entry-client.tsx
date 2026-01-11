@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlayerScoreDialog } from "@/components/player-score-dialog";
 import { formatRoundLabelShort, sortRoundLabels } from "@/lib/rounds";
 import { sortRosterBySlot } from "@/lib/roster";
 
@@ -262,8 +263,16 @@ export function MyEntryClient() {
                       <TableRow key={player.playerId}>
                         <TableCell className="px-2 sm:px-4">{player.slot}</TableCell>
                         <TableCell className="px-2 sm:px-4">
-                          <div className="font-medium text-slate-900">{player.playerName}</div>
-                          {roundLine && <div className="text-[11px] text-slate-400">{roundLine}</div>}
+                          <PlayerScoreDialog
+                            entryId={data.entry.id}
+                            playerId={player.playerId}
+                            playerName={player.playerName}
+                          >
+                            <button type="button" className="text-left">
+                              <div className="font-medium text-slate-900 hover:underline">{player.playerName}</div>
+                              {roundLine && <div className="text-[11px] text-slate-400">{roundLine}</div>}
+                            </button>
+                          </PlayerScoreDialog>
                         </TableCell>
                         <TableCell className="px-2 sm:px-4">{player.teamAbbreviation}</TableCell>
                         <TableCell className="hidden px-2 sm:table-cell sm:px-4">{player.position}</TableCell>

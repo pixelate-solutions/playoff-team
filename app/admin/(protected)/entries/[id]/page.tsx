@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { entrySlotOrder, sortRosterBySlot } from "@/lib/roster";
 import { Input } from "@/components/ui/input";
+import { PlayerScoreDialog } from "@/components/player-score-dialog";
 
 interface EntryResponse {
   entry: {
@@ -368,7 +369,13 @@ export default function AdminEntryDetailPage() {
               {sortRosterBySlot(entry.roster).map((player) => (
                 <TableRow key={player.playerId}>
                   <TableCell>{player.slot}</TableCell>
-                  <TableCell>{player.playerName}</TableCell>
+                  <TableCell>
+                    <PlayerScoreDialog entryId={entry.entry.id} playerId={player.playerId} playerName={player.playerName}>
+                      <button type="button" className="text-left">
+                        <div className="font-medium text-slate-900 hover:underline">{player.playerName}</div>
+                      </button>
+                    </PlayerScoreDialog>
+                  </TableCell>
                   <TableCell>{player.teamAbbreviation}</TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" onClick={() => handleRemove(player.playerId, player.slot)}>

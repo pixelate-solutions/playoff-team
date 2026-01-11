@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlayerScoreDialog } from "@/components/player-score-dialog";
 import { sortRosterBySlot } from "@/lib/roster";
 
 const rounds = ["Wildcard", "Divisional", "Conference", "SuperBowl"] as const;
@@ -466,7 +467,15 @@ export function AdminScoreboardClient({
                   <TableRow key={player.playerId}>
                       <TableCell>{player.slot}</TableCell>
                       <TableCell>
-                        <div className="font-medium text-slate-900">{player.playerName}</div>
+                        <PlayerScoreDialog
+                          entryId={entry.entryId}
+                          playerId={player.playerId}
+                          playerName={player.playerName}
+                        >
+                          <button type="button" className="text-left">
+                            <div className="font-medium text-slate-900 hover:underline">{player.playerName}</div>
+                          </button>
+                        </PlayerScoreDialog>
                       </TableCell>
                       <TableCell>{player.teamAbbreviation}</TableCell>
                       <TableCell>{player.totalPoints.toFixed(2)}</TableCell>
