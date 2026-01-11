@@ -194,6 +194,8 @@ export async function fetchEspnStats(params: {
     const playerStats = new Map<string, NormalizedStat>();
     const teamDefense = new Map<string, DefenseTotals>();
     const fgBuckets = new Map<string, KickerBuckets>();
+    const teamFumblesLost = new Map<string, number>();
+    const teamAbbrs: string[] = [];
     const round = params.round ?? "Wildcard";
     const seasonType = params.seasonType === "post" ? "post" : "regular";
     const week = params.week;
@@ -222,24 +224,10 @@ export async function fetchEspnStats(params: {
     for (const team of teams) {
       const teamAbbr = team.team?.abbreviation ?? "";
       if (!teamAbbr) continue;
+      teamAbbrs.push(teamAbbr);
 
-      const defenseEligibleAthletes = new Set<string>();
-      for (const category of team.statistics ?? []) {
-        const categoryName = (category.name ?? "").toLowerCase();
-        if (
-          categoryName === "defensive" ||
-          categoryName === "interceptions" ||
-          categoryName === "kickreturns" ||
-          categoryName === "puntreturns"
-        ) {
-          for (const athleteStat of category.athletes ?? []) {
-            const athleteId = athleteStat.athlete?.id;
-            if (athleteId) {
-              defenseEligibleAthletes.add(athleteId);
-            }
-          }
-        }
-      }
+      let teamFumblesLostTotal: number | null = null;
+      let teamFumblesLostSum = 0;
 
       for (const category of team.statistics ?? []) {
         const categoryName = (category.name ?? "").toLowerCase();
@@ -319,10 +307,13 @@ export async function fetchEspnStats(params: {
           }
 
           if (categoryName === "fumbles") {
-            const defense = getOrCreateDefense(teamDefense, teamAbbr);
-            const recovered = getStatValue(keys, stats, "fumblesRecovered");
-            if (recovered && defenseEligibleAthletes.has(athleteId)) {
-              defense.fumbleRecoveries += recovered;
+            const fumblesLost = getStatValue(keys, stats, "fumblesLost");
+            const name = athleteName.toLowerCase();
+            const isTeamRow = name === "team" || name === "total" || name === "totals";
+            if (isTeamRow) {
+              teamFumblesLostTotal = fumblesLost;
+            } else {
+              teamFumblesLostSum += fumblesLost;
             }
           }
 
@@ -337,6 +328,16 @@ export async function fetchEspnStats(params: {
           }
         }
       }
+      const fumblesLost = teamFumblesLostTotal ?? teamFumblesLostSum;
+      if (fumblesLost) {
+        teamFumblesLost.set(teamAbbr, fumblesLost);
+      }
+    }
+
+    const opponentByTeam = new Map<string, string>();
+    if (teamAbbrs.length === 2) {
+      opponentByTeam.set(teamAbbrs[0], teamAbbrs[1]);
+      opponentByTeam.set(teamAbbrs[1], teamAbbrs[0]);
     }
 
     for (const entry of playerStats.values()) {
@@ -346,6 +347,8 @@ export async function fetchEspnStats(params: {
     }
 
     for (const [teamAbbr, defense] of teamDefense.entries()) {
+      const opponent = opponentByTeam.get(teamAbbr);
+      defense.fumbleRecoveries = opponent ? teamFumblesLost.get(opponent) ?? 0 : 0;
       const totalReturnTds = Math.max(defense.defensiveTds, defense.returnTds);
       const dstStat: NormalizedStat = {
         teamAbbr,
