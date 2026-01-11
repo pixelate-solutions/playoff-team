@@ -25,10 +25,44 @@ export function LeaderboardClient({
   const [showAll, setShowAll] = useState(false);
   const [sortDesc, setSortDesc] = useState(true);
 
-  const data = useMemo(() => {
-    const sorted = [...initialData].sort((a, b) => (sortDesc ? b.totalPoints - a.totalPoints : a.totalPoints - b.totalPoints));
-    return showAll ? sorted : sorted.slice(0, 10);
+  const { data, rankLabels } = useMemo(() => {
+    const sorted = [...initialData].sort((a, b) =>
+      sortDesc ? b.totalPoints - a.totalPoints : a.totalPoints - b.totalPoints
+    );
+    const labels = new Map<string, string>();
+    let index = 0;
+    while (index < sorted.length) {
+      const start = index;
+      const pointsKey = sorted[index].totalPoints.toFixed(2);
+      while (index < sorted.length && sorted[index].totalPoints.toFixed(2) === pointsKey) {
+        index += 1;
+      }
+      const rank = start + 1;
+      const isTie = index - start > 1;
+      const label = isTie ? `T-${formatOrdinal(rank)}` : formatOrdinal(rank);
+      for (let i = start; i < index; i += 1) {
+        labels.set(sorted[i].id, label);
+      }
+    }
+    return { data: showAll ? sorted : sorted.slice(0, 10), rankLabels: labels };
   }, [initialData, showAll, sortDesc]);
+
+  function formatOrdinal(value: number) {
+    const lastTwo = value % 100;
+    if (lastTwo >= 11 && lastTwo <= 13) {
+      return `${value}th`;
+    }
+    switch (value % 10) {
+      case 1:
+        return `${value}st`;
+      case 2:
+        return `${value}nd`;
+      case 3:
+        return `${value}rd`;
+      default:
+        return `${value}th`;
+    }
+  }
 
   return (
     <div className="container space-y-8">
@@ -63,9 +97,9 @@ export function LeaderboardClient({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((entry, index) => (
+              {data.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell>#{index + 1}</TableCell>
+                  <TableCell>{rankLabels.get(entry.id)}</TableCell>
                   <TableCell>
                     {linksEnabled ? (
                       <Link className="font-medium text-slate-900 hover:underline" href={`/entry/${entry.id}`}>
