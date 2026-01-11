@@ -9,14 +9,14 @@ const offensiveScoring = [
   { label: "XP", value: "1" },
   { label: "Passing 2PT", value: "2" },
   { label: "Passing TD", value: "6" },
-  { label: "Passing Yards", value: "1 / 20" },
+  { label: "Passing Yards", value: "20 yds = 1 pt" },
   { label: "Receiving 2PT", value: "2" },
   { label: "Receiving TD", value: "6" },
-  { label: "Receiving Yards", value: "1 / 10" },
+  { label: "Receiving Yards", value: "10 yds = 1 pt" },
   { label: "Receptions", value: "1" },
   { label: "Rushing 2PT", value: "2" },
   { label: "Rushing TD", value: "6" },
-  { label: "Rushing Yards", value: "1 / 10" },
+  { label: "Rushing Yards", value: "10 yds = 1 pt" },
 ];
 
 const defenseScoring = [
